@@ -80,7 +80,8 @@ Format: `- [ ] tNNN Description @owner #tag ~estimate risk:level logged:date`
 
 ## Done
 
-<!--TOON:done[0]{id,desc,owner,tags,est,actual,logged,started,completed,status}:
+<!--TOON:done[1]{id,desc,owner,tags,est,actual,logged,started,completed,status}:
+- t001 Document supervisor dashboard refresh recovery @superdav42 #ops #dashboard ~15m actual:15m logged:2026-05-31 started:2026-05-31 completed:2026-05-31 status:done
 -->
 
 ## Declined
@@ -99,5 +100,5 @@ Format: `- [ ] tNNN Description @owner #tag ~estimate risk:level logged:date`
 <!--/TOON:subtasks-->
 
 <!--TOON:summary{total,ready,pending,in_progress,in_review,done,declined,total_est,total_actual}:
-0,0,0,0,0,0,0,,
+1,0,0,0,0,1,0,15m,15m
 -->
