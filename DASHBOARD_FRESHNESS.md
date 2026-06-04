@@ -30,3 +30,27 @@ Expected healthy evidence from `~/.aidevops/logs/stats.log` is an hourly
 If issue #8 is stale but the log shows the skip line above and issue #17 has a
 recent `Last sweep`, the scheduler is running; the stale queue dashboard is a
 legacy/inactive-work signal rather than a plugin code defect.
+
+## Issue #26 triage evidence
+
+Issue #26 was generated from issue #8 after the legacy queue dashboard appeared
+stale. The local scheduler evidence showed the stats wrapper was still running:
+
+```text
+[stats-wrapper] Finished at 2026-06-04T17:49:19Z
+[stats] Health issue: skipping creation for Ultimate-Multisite/ultimate-ai-plugin-translations — no active PRs, assigned issues, auto-dispatch work, or workers
+[stats] Health issues: updated 15 repo(s)
+```
+
+The dashboard issue also had a fresh body marker during triage:
+
+```text
+issue #8 updated_at=2026-06-04T16:15:40Z
+has_last_refresh=true
+```
+
+Root cause: the freshness alert was based on the legacy queue dashboard's
+previous timestamp, while the stats wrapper was healthy and the repo had no
+active queue work to report. Treat this as a false-positive stale-dashboard
+alert unless `stats.log` lacks recent `[stats-wrapper] Finished` entries or the
+issue body no longer contains `last_refresh:`.
