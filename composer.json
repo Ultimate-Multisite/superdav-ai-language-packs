@@ -46,7 +46,7 @@
         ]
     },
     "scripts": {
-        "build": "@composer archive-project --format=zip --dir=build --file=superdav-ai-plugin-translations"
+        "build": "@composer archive-project --format=zip --dir=./ --file=superdav-ai-plugin-translations"
     },
     "require-dev": {
         "phpstan/extension-installer": "^1.1",
