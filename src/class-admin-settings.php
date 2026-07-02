@@ -697,7 +697,7 @@ class Admin_Settings {
 	 * @return array<int, array{textdomain: string, locale: string, strings: int}>
 	 */
 	private function get_local_translation_details(): array {
-		$languages_dir = WP_CONTENT_DIR . '/languages/plugins';
+		$languages_dir = WP_LANG_DIR . '/plugins';
 		$details       = [];
 
 		if ( ! is_dir( $languages_dir ) ) {
@@ -793,7 +793,7 @@ class Admin_Settings {
 	 * @return string|null Absolute .mo path, or null if no file exists.
 	 */
 	private function find_translation_file( string $textdomain, string $locale, string $slug = '' ): ?string {
-		$languages_dir = WP_CONTENT_DIR . '/languages/plugins';
+		$languages_dir = WP_LANG_DIR . '/plugins';
 		$candidates    = [
 			$languages_dir . '/' . $textdomain . '-' . $locale . '.mo',
 		];
