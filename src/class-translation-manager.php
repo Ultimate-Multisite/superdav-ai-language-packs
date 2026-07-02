@@ -886,7 +886,7 @@ class Translation_Manager {
      * @return void
      */
     public function cleanup_old_translations(): void {
-        $languages_dir = WP_CONTENT_DIR . '/languages/plugins';
+        $languages_dir = WP_LANG_DIR . '/plugins';
 
         if (!is_dir($languages_dir)) {
             return;
