@@ -43,14 +43,16 @@ if (!defined('SD_AI_LANG_PACKS_API_BASE')) {
  */
 function init(): void
 {
+    require_once SD_AI_LANG_PACKS_DIR . 'src/class-locale-discovery.php';
     require_once SD_AI_LANG_PACKS_DIR . 'src/class-admin-settings.php';
     require_once SD_AI_LANG_PACKS_DIR . 'src/class-translation-api-client.php';
     require_once SD_AI_LANG_PACKS_DIR . 'src/class-translation-manager.php';
     // Initialize components.
-    $api_client = new Translation_API_Client();
+    $api_client       = new Translation_API_Client();
+    $locale_discovery = new Locale_Discovery();
 
-    (new Translation_Manager($api_client))->init();
-    (new Admin_Settings($api_client))->init();
+    (new Translation_Manager($api_client, $locale_discovery))->init();
+    (new Admin_Settings($api_client, $locale_discovery))->init();
 }
 
 add_action('plugins_loaded', __NAMESPACE__ . '\\init', 20);

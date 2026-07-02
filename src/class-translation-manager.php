@@ -33,13 +33,23 @@ class Translation_Manager {
     private Translation_API_Client $api_client;
 
     /**
+     * Locale discovery service.
+     *
+     * @since 1.0.0
+     * @var Locale_Discovery
+     */
+    private Locale_Discovery $locale_discovery;
+
+    /**
      * Constructor.
      *
      * @since 1.0.0
-     * @param Translation_API_Client $api_client API client instance.
+     * @param Translation_API_Client $api_client       API client instance.
+     * @param Locale_Discovery|null  $locale_discovery Locale discovery service.
      */
-    public function __construct(Translation_API_Client $api_client) {
-        $this->api_client = $api_client;
+    public function __construct(Translation_API_Client $api_client, ?Locale_Discovery $locale_discovery = null) {
+        $this->api_client       = $api_client;
+        $this->locale_discovery = $locale_discovery ?? new Locale_Discovery();
     }
 
     /**
@@ -623,33 +633,7 @@ class Translation_Manager {
             return $cached_locales;
         }
 
-        $locales = [get_locale()];
-
-        $user_ids = get_users(['fields' => 'ID']);
-        foreach ($user_ids as $user_id) {
-            $user_locale = get_user_meta((int) $user_id, 'locale', true);
-            if (is_string($user_locale) && '' !== $user_locale) {
-                $locales[] = $user_locale;
-            }
-        }
-
-        if (is_multisite() && function_exists('get_sites')) {
-            $site_ids = get_sites(
-                [
-                    'fields' => 'ids',
-                    'number' => 0,
-                ]
-            );
-
-            foreach ($site_ids as $site_id) {
-                $site_locale = get_blog_option((int) $site_id, 'WPLANG', '');
-                if (is_string($site_locale) && '' !== $site_locale) {
-                    $locales[] = $site_locale;
-                }
-            }
-        }
-
-        $locales = array_values(array_filter(array_unique($locales)));
+        $locales = $this->locale_discovery->get_locales();
 
         $cached_locales = empty($locales) ? ['en_US'] : $locales;
 
@@ -812,7 +796,11 @@ class Translation_Manager {
             return;
         }
         $locale = get_user_meta($user_id, 'locale', true);
-        if (empty($locale) || in_array($locale, ['en_US', 'en', 'site-default'], true)) {
+        if (!is_string($locale)) {
+            return;
+        }
+        $locale = trim($locale);
+        if (!$this->locale_discovery->is_translation_locale($locale)) {
             return;
         }
         if (!wp_next_scheduled('sd_ai_lang_packs_request_user_locale', [$user_id])) {
@@ -837,7 +825,11 @@ class Translation_Manager {
         }
 
         $locale = get_user_meta($user_id, 'locale', true);
-        if (empty($locale) || in_array($locale, ['en_US', 'en', 'site-default'], true)) {
+        if (!is_string($locale)) {
+            return;
+        }
+        $locale = trim($locale);
+        if (!$this->locale_discovery->is_translation_locale($locale)) {
             return;
         }
 
