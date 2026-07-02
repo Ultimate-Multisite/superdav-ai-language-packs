@@ -216,13 +216,16 @@ class Locale_Discovery {
 			return array();
 		}
 
-		// Each UNION branch is prepared above; table names are quoted WordPress blog-prefix identifiers.
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$query = 'SELECT DISTINCT locale FROM (' . implode( ' UNION ALL ', $selects ) . ') AS site_locales';
-
-		// Read-only discovery query prepared above.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-		$locales = $wpdb->get_col( $query );
+		// Each UNION branch is prepared above; Plugin Check cannot infer the prepared fragment array.
+		// Table names are quoted WordPress blog-prefix identifiers.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$locales = $wpdb->get_col(
+			$wpdb->prepare(
+				'SELECT DISTINCT locale FROM (' . implode( ' UNION ALL ', $selects ) . ') AS site_locales WHERE locale <> %s',
+				''
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 
 		return $this->normalise_locale_list( (array) $locales );
 	}
