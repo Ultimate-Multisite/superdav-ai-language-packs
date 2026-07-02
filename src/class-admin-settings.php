@@ -31,13 +31,23 @@ class Admin_Settings {
 	private Translation_API_Client $api_client;
 
 	/**
+	 * Locale discovery service.
+	 *
+	 * @since 1.0.0
+	 * @var Locale_Discovery
+	 */
+	private Locale_Discovery $locale_discovery;
+
+	/**
 	 * Constructor.
 	 *
 	 * @since 1.0.0
-	 * @param Translation_API_Client $api_client API client instance.
+	 * @param Translation_API_Client $api_client       API client instance.
+	 * @param Locale_Discovery|null  $locale_discovery Locale discovery service.
 	 */
-	public function __construct( Translation_API_Client $api_client ) {
-		$this->api_client = $api_client;
+	public function __construct( Translation_API_Client $api_client, ?Locale_Discovery $locale_discovery = null ) {
+		$this->api_client       = $api_client;
+		$this->locale_discovery = $locale_discovery ?? new Locale_Discovery();
 	}
 
 	/**
@@ -529,132 +539,7 @@ class Admin_Settings {
 	 * @return array<string, array{sources: array<string, bool>}> Locale details keyed by locale code.
 	 */
 	private function get_monitored_locales(): array {
-		$locales = [];
-
-		$this->add_locale_source( $locales, get_locale(), 'site' );
-
-		foreach ( $this->get_user_profile_locales() as $user_locale ) {
-			$this->add_locale_source( $locales, $user_locale, 'user' );
-		}
-
-		foreach ( $this->get_network_site_locales() as $site_locale ) {
-			$this->add_locale_source( $locales, $site_locale, 'network_site' );
-		}
-
-		ksort( $locales );
-
-		return $locales;
-	}
-
-	/**
-	 * Get distinct locale values saved in user profiles without loading users.
-	 *
-	 * @since 1.0.0
-	 * @return array<int, string> Locale codes.
-	 */
-	private function get_user_profile_locales(): array {
-		global $wpdb;
-
-		// Read-only admin status query; only distinct locale strings are needed, not user records.
-		// phpcs:disable WordPress.DB
-		$locales = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT DISTINCT meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value <> ''",
-				'locale'
-			)
-		);
-		// phpcs:enable WordPress.DB
-
-		return array_values( array_filter( array_map( 'strval', (array) $locales ) ) );
-	}
-
-	/**
-	 * Get distinct locale values saved as site languages across the network.
-	 *
-	 * @since 1.0.0
-	 * @return array<int, string> Locale codes.
-	 */
-	private function get_network_site_locales(): array {
-		global $wpdb;
-
-		if ( ! is_multisite() ) {
-			return [];
-		}
-
-		// Read-only admin status query; IDs are used only to build WPLANG option lookups without loading site records.
-		// phpcs:disable WordPress.DB
-		$site_ids = $wpdb->get_col(
-			"SELECT blog_id FROM {$wpdb->blogs} WHERE deleted = 0 AND spam = 0 AND archived = 0"
-		);
-		// phpcs:enable WordPress.DB
-		if ( empty( $site_ids ) ) {
-			return [];
-		}
-
-		$selects = [];
-		foreach ( array_map( 'intval', $site_ids ) as $site_id ) {
-			$table     = $this->quote_identifier( $wpdb->get_blog_prefix( $site_id ) . 'options' );
-			// Table name is quoted from a WordPress-generated blog prefix; value is prepared below.
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$selects[] = $wpdb->prepare(
-				"SELECT option_value AS locale FROM {$table} WHERE option_name = %s AND option_value <> ''",
-				'WPLANG'
-			);
-		}
-
-		// Each UNION branch is prepared above, and table names are quoted identifiers from WordPress blog prefixes.
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$query = 'SELECT DISTINCT locale FROM (' . implode( ' UNION ALL ', $selects ) . ') AS site_locales';
-
-		// Read-only admin status query prepared above.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
-		$locales = $wpdb->get_col( $query );
-
-		return array_values( array_filter( array_map( 'strval', (array) $locales ) ) );
-	}
-
-	/**
-	 * Quote a SQL identifier with backticks.
-	 *
-	 * @since 1.0.0
-	 * @param string $identifier SQL identifier.
-	 * @return string Quoted identifier.
-	 */
-	private function quote_identifier( string $identifier ): string {
-		return '`' . str_replace( '`', '``', $identifier ) . '`';
-	}
-
-	/**
-	 * Add a locale source to the locale summary.
-	 *
-	 * @since 1.0.0
-	 * @param array<string, array{sources: array<string, bool>}> $locales Locale details, mutated in place.
-	 * @param string                                             $locale  Locale code.
-	 * @param string                                             $source  Source key.
-	 * @return void
-	 */
-	private function add_locale_source( array &$locales, string $locale, string $source ): void {
-		$locale = trim( $locale );
-		if ( ! $this->is_translation_locale( $locale ) ) {
-			return;
-		}
-
-		if ( ! isset( $locales[ $locale ] ) ) {
-			$locales[ $locale ] = [ 'sources' => [] ];
-		}
-
-		$locales[ $locale ]['sources'][ $source ] = true;
-	}
-
-	/**
-	 * Check whether a locale needs translated language packs.
-	 *
-	 * @since 1.0.0
-	 * @param string $locale Locale code.
-	 * @return bool True when AI translations can be requested for the locale.
-	 */
-	private function is_translation_locale( string $locale ): bool {
-		return '' !== $locale && ! in_array( $locale, [ 'en_US', 'en', 'site-default' ], true );
+		return $this->locale_discovery->get_translation_locale_summary();
 	}
 
 	/**
