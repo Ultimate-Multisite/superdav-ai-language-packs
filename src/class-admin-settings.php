@@ -533,40 +533,95 @@ class Admin_Settings {
 
 		$this->add_locale_source( $locales, get_locale(), 'site' );
 
-		$user_ids = get_users(
-			[
-				'fields'       => 'ID',
-				'meta_key'     => 'locale',
-				'meta_compare' => 'EXISTS',
-			]
-		);
-
-		foreach ( $user_ids as $user_id ) {
-			$user_locale = get_user_meta( (int) $user_id, 'locale', true );
-			if ( is_string( $user_locale ) ) {
-				$this->add_locale_source( $locales, $user_locale, 'user' );
-			}
+		foreach ( $this->get_user_profile_locales() as $user_locale ) {
+			$this->add_locale_source( $locales, $user_locale, 'user' );
 		}
 
-		if ( is_multisite() && function_exists( 'get_sites' ) ) {
-			$site_ids = get_sites(
-				[
-					'fields' => 'ids',
-					'number' => 0,
-				]
-			);
-
-			foreach ( $site_ids as $site_id ) {
-				$site_locale = get_blog_option( (int) $site_id, 'WPLANG', '' );
-				if ( is_string( $site_locale ) ) {
-					$this->add_locale_source( $locales, $site_locale, 'network_site' );
-				}
-			}
+		foreach ( $this->get_network_site_locales() as $site_locale ) {
+			$this->add_locale_source( $locales, $site_locale, 'network_site' );
 		}
 
 		ksort( $locales );
 
 		return $locales;
+	}
+
+	/**
+	 * Get distinct locale values saved in user profiles without loading users.
+	 *
+	 * @since 1.0.0
+	 * @return array<int, string> Locale codes.
+	 */
+	private function get_user_profile_locales(): array {
+		global $wpdb;
+
+		// Read-only admin status query; only distinct locale strings are needed, not user records.
+		// phpcs:disable WordPress.DB
+		$locales = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value <> ''",
+				'locale'
+			)
+		);
+		// phpcs:enable WordPress.DB
+
+		return array_values( array_filter( array_map( 'strval', (array) $locales ) ) );
+	}
+
+	/**
+	 * Get distinct locale values saved as site languages across the network.
+	 *
+	 * @since 1.0.0
+	 * @return array<int, string> Locale codes.
+	 */
+	private function get_network_site_locales(): array {
+		global $wpdb;
+
+		if ( ! is_multisite() ) {
+			return [];
+		}
+
+		// Read-only admin status query; IDs are used only to build WPLANG option lookups without loading site records.
+		// phpcs:disable WordPress.DB
+		$site_ids = $wpdb->get_col(
+			"SELECT blog_id FROM {$wpdb->blogs} WHERE deleted = 0 AND spam = 0 AND archived = 0"
+		);
+		// phpcs:enable WordPress.DB
+		if ( empty( $site_ids ) ) {
+			return [];
+		}
+
+		$selects = [];
+		foreach ( array_map( 'intval', $site_ids ) as $site_id ) {
+			$table     = $this->quote_identifier( $wpdb->get_blog_prefix( $site_id ) . 'options' );
+			// Table name is quoted from a WordPress-generated blog prefix; value is prepared below.
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$selects[] = $wpdb->prepare(
+				"SELECT option_value AS locale FROM {$table} WHERE option_name = %s AND option_value <> ''",
+				'WPLANG'
+			);
+		}
+
+		// Each UNION branch is prepared above, and table names are quoted identifiers from WordPress blog prefixes.
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$query = 'SELECT DISTINCT locale FROM (' . implode( ' UNION ALL ', $selects ) . ') AS site_locales';
+
+		// Read-only admin status query prepared above.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+		$locales = $wpdb->get_col( $query );
+
+		return array_values( array_filter( array_map( 'strval', (array) $locales ) ) );
+	}
+
+	/**
+	 * Quote a SQL identifier with backticks.
+	 *
+	 * @since 1.0.0
+	 * @param string $identifier SQL identifier.
+	 * @return string Quoted identifier.
+	 */
+	private function quote_identifier( string $identifier ): string {
+		return '`' . str_replace( '`', '``', $identifier ) . '`';
 	}
 
 	/**
