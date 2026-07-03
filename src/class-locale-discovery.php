@@ -201,15 +201,7 @@ class Locale_Discovery {
 
 		$selects = array();
 		foreach ( $site_ids as $site_id ) {
-			$table = $this->quote_identifier( $wpdb->get_blog_prefix( $site_id ) . 'options' );
-
-			// Table name is quoted from a WordPress-generated blog prefix; value is prepared below.
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$selects[] = $wpdb->prepare(
-				"SELECT option_value AS locale FROM {$table} WHERE option_name = %s AND option_value <> ''",
-				'WPLANG'
-			);
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$selects[] = $this->prepare_network_site_locale_select( $site_id );
 		}
 
 		if ( empty( $selects ) ) {
@@ -228,6 +220,45 @@ class Locale_Discovery {
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 
 		return $this->normalise_locale_list( (array) $locales );
+	}
+
+	/**
+	 * Prepare a locale-select query for a site's options table.
+	 *
+	 * Uses wpdb's `%i` identifier placeholder when available (WordPress 6.2+)
+	 * and falls back to strict backtick quoting for older supported WordPress
+	 * versions.
+	 *
+	 * @since 1.0.0
+	 * @param int $site_id Site ID.
+	 * @return string Prepared SELECT query fragment.
+	 */
+	private function prepare_network_site_locale_select( int $site_id ): string {
+		global $wpdb;
+
+		$table = $wpdb->get_blog_prefix( $site_id ) . 'options';
+
+		if ( $wpdb->has_cap( 'identifier_placeholders' ) ) {
+			return $wpdb->prepare(
+				'SELECT option_value AS locale FROM %i WHERE option_name = %s AND option_value <> %s',
+				$table,
+				'WPLANG',
+				''
+			);
+		}
+
+		$table = $this->quote_identifier( $table );
+
+		// Table name is quoted from a WordPress-generated blog prefix; values are prepared below.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$query = $wpdb->prepare(
+			"SELECT option_value AS locale FROM {$table} WHERE option_name = %s AND option_value <> %s",
+			'WPLANG',
+			''
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		return $query;
 	}
 
 	/**
