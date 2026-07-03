@@ -74,6 +74,7 @@ class Admin_Settings {
 
 		add_action( 'admin_notices', [ $this, 'display_admin_notices' ] );
 		add_action( 'network_admin_notices', [ $this, 'display_admin_notices' ] );
+		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_styles' ] );
 
 	}
 
@@ -133,6 +134,28 @@ class Admin_Settings {
 	}
 
 	/**
+	 * Enqueue admin page styles.
+	 *
+	 * @since 1.0.0
+	 * @param string $hook_suffix Current admin page hook suffix.
+	 * @return void
+	 */
+	public function enqueue_admin_styles( string $hook_suffix ): void {
+		if ( 'settings_page_superdav-ai-language-packs' !== $hook_suffix ) {
+			return;
+		}
+
+		$stylesheet_suffix = ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) ? '' : '.min';
+
+		wp_enqueue_style(
+			'sd-ai-lang-packs-admin',
+			SD_AI_LANG_PACKS_URL . 'assets/admin' . $stylesheet_suffix . '.css',
+			[ 'dashicons' ],
+			SD_AI_LANG_PACKS_VERSION
+		);
+	}
+
+	/**
 	 * Render the status page.
 	 *
 	 * @since 1.0.0
@@ -151,91 +174,6 @@ class Admin_Settings {
 		?>
 		<div class="wrap sd-ai-lang-packs-status">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-
-			<style>
-				.sd-ai-lang-packs-status .card {
-					max-width: 960px;
-					padding: 16px 20px;
-				}
-				.sd-ai-lang-packs-description {
-					max-width: 800px;
-					font-size: 14px;
-					margin-bottom: 20px;
-				}
-				.sd-ai-lang-packs-status-line {
-					display: flex;
-					align-items: center;
-					gap: 8px;
-					margin: 0;
-				}
-				.sd-ai-lang-packs-status-line .dashicons-yes-alt {
-					color: #00a32a;
-				}
-				.sd-ai-lang-packs-status-line .dashicons-warning {
-					color: #d63638;
-				}
-				.sd-ai-lang-packs-status-line .dashicons-update {
-					color: #2271b1;
-				}
-				.sd-ai-lang-packs-summary {
-					display: grid;
-					grid-template-columns: repeat( auto-fit, minmax( 140px, 1fr ) );
-					gap: 16px;
-					margin: 0 0 20px;
-				}
-				.sd-ai-lang-packs-stat {
-					background: #f6f7f7;
-					border: 1px solid #dcdcde;
-					border-radius: 4px;
-					padding: 12px;
-					text-align: center;
-				}
-				.sd-ai-lang-packs-stat-number {
-					font-size: 28px;
-					font-weight: 600;
-					line-height: 1.1;
-				}
-				.sd-ai-lang-packs-stat-label,
-				.sd-ai-lang-packs-muted {
-					color: #646970;
-				}
-				.sd-ai-lang-packs-stat-label {
-					font-size: 13px;
-					margin-top: 2px;
-				}
-				.sd-ai-lang-packs-progress {
-					background: #f0f0f1;
-					border-radius: 999px;
-					height: 10px;
-					overflow: hidden;
-					margin: 12px 0;
-				}
-				.sd-ai-lang-packs-progress-bar {
-					background: #2271b1;
-					height: 10px;
-				}
-				.sd-ai-lang-packs-meta-list {
-					display: grid;
-					grid-template-columns: repeat( auto-fit, minmax( 220px, 1fr ) );
-					gap: 8px 20px;
-					margin: 12px 0 0;
-				}
-				.sd-ai-lang-packs-meta-list dt {
-					font-weight: 600;
-				}
-				.sd-ai-lang-packs-meta-list dd {
-					margin: 0;
-				}
-				.sd-ai-lang-packs-locale-list {
-					margin-bottom: 0;
-				}
-				.sd-ai-lang-packs-table {
-					margin-top: 4px;
-				}
-				.sd-ai-lang-packs-table .column-strings {
-					text-align: right;
-				}
-			</style>
 
 			<p class="description sd-ai-lang-packs-description">
 				<?php esc_html_e( 'Your plugins are translated automatically by AI whenever official translations are missing or incomplete. There is nothing to configure on this page — use it to review service health, background activity, detected locales, and installed AI language packs.', 'superdav-ai-language-packs' ); ?>
