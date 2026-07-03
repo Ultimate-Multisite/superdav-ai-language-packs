@@ -145,9 +145,11 @@ class Admin_Settings {
 			return;
 		}
 
+		$stylesheet_suffix = ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) ? '' : '.min';
+
 		wp_enqueue_style(
 			'sd-ai-lang-packs-admin',
-			SD_AI_LANG_PACKS_URL . 'assets/admin.css',
+			SD_AI_LANG_PACKS_URL . 'assets/admin' . $stylesheet_suffix . '.css',
 			[ 'dashicons' ],
 			SD_AI_LANG_PACKS_VERSION
 		);
