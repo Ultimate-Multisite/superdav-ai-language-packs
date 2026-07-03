@@ -128,12 +128,31 @@ class Locale_Discovery {
 
 		// Read-only discovery query; only distinct locale strings are needed, not user records.
 		// phpcs:disable WordPress.DB
-		$locales = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT DISTINCT meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s AND meta_value <> ''",
-				'locale'
-			)
-		);
+		if ( $wpdb->has_cap( 'identifier_placeholders' ) ) {
+			$locales = $wpdb->get_col(
+				$wpdb->prepare(
+					'SELECT DISTINCT meta_value FROM %i WHERE meta_key = %s AND meta_value <> %s',
+					$wpdb->usermeta,
+					'locale',
+					''
+				)
+			);
+		} else {
+			$table = $this->quote_identifier( $wpdb->usermeta );
+
+			// Core table name is quoted for WordPress versions before `%i` support; values are prepared below.
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
+			$locales = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT DISTINCT meta_value FROM {$table} WHERE meta_key = %s AND meta_value <> %s",
+					'locale',
+					''
+				)
+			);
+			// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		}
 		// phpcs:enable WordPress.DB
 
 		return $this->normalise_locale_list( (array) $locales );
@@ -165,15 +184,35 @@ class Locale_Discovery {
 		do {
 			// Read-only discovery query; fetch bounded ID batches instead of loading WP_Site objects.
 			// phpcs:disable WordPress.DB
-			$site_ids = $wpdb->get_col(
-				$wpdb->prepare(
-					"SELECT blog_id FROM {$wpdb->blogs} "
-					. 'WHERE blog_id > %d AND deleted = 0 AND spam = 0 AND archived = 0 '
-					. 'ORDER BY blog_id ASC LIMIT %d',
-					$last_blog_id,
-					$batch_size
-				)
-			);
+			if ( $wpdb->has_cap( 'identifier_placeholders' ) ) {
+				$site_ids = $wpdb->get_col(
+					$wpdb->prepare(
+						'SELECT blog_id FROM %i '
+						. 'WHERE blog_id > %d AND deleted = 0 AND spam = 0 AND archived = 0 '
+						. 'ORDER BY blog_id ASC LIMIT %d',
+						$wpdb->blogs,
+						$last_blog_id,
+						$batch_size
+					)
+				);
+			} else {
+				$table = $this->quote_identifier( $wpdb->blogs );
+
+				// Core table name is quoted for WordPress versions before `%i` support; values are prepared below.
+				// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
+				$site_ids = $wpdb->get_col(
+					$wpdb->prepare(
+						"SELECT blog_id FROM {$table} "
+						. 'WHERE blog_id > %d AND deleted = 0 AND spam = 0 AND archived = 0 '
+						. 'ORDER BY blog_id ASC LIMIT %d',
+						$last_blog_id,
+						$batch_size
+					)
+				);
+				// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter
+				// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			}
 			// phpcs:enable WordPress.DB
 
 			$site_ids = array_map( 'intval', (array) $site_ids );
@@ -210,14 +249,16 @@ class Locale_Discovery {
 
 		// Each UNION branch is prepared above; Plugin Check cannot infer the prepared fragment array.
 		// Table names are quoted WordPress blog-prefix identifiers.
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+		// phpcs:disable WordPress.DB
+		// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$locales = $wpdb->get_col(
 			$wpdb->prepare(
 				'SELECT DISTINCT locale FROM (' . implode( ' UNION ALL ', $selects ) . ') AS site_locales WHERE locale <> %s',
 				''
 			)
 		);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+		// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter
+		// phpcs:enable WordPress.DB
 
 		return $this->normalise_locale_list( (array) $locales );
 	}
@@ -250,13 +291,15 @@ class Locale_Discovery {
 		$table = $this->quote_identifier( $table );
 
 		// Table name is quoted from a WordPress-generated blog prefix; values are prepared below.
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:disable WordPress.DB
+		// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$query = $wpdb->prepare(
 			"SELECT option_value AS locale FROM {$table} WHERE option_name = %s AND option_value <> %s",
 			'WPLANG',
 			''
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter
+		// phpcs:enable WordPress.DB
 
 		return $query;
 	}
