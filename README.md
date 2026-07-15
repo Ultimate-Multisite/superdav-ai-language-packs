@@ -70,7 +70,6 @@ The plugin runs automatically. Site owners can adjust behaviour from `wp-config.
 | Constant / Filter | Description | Default |
 |-------------------|-------------|---------|
 | `SD_AI_LANG_PACKS_API_BASE` | Custom translation server endpoint | `https://translate.ultimatemultisite.com/wp-json/sd-ai-lang-pack/v1` |
-| `sd_ai_lang_packs_enabled` | Enable or disable automatic translation checks | `true` |
 | `sd_ai_lang_packs_fill_incomplete` | Request AI translations for missing strings in incomplete official translations | `true` |
 | `sd_ai_lang_packs_cache_duration` | Cache duration for completed translation result sets | `HOUR_IN_SECONDS` |
 | `sd_ai_lang_packs_refresh_chunk_size` | Number of plugins processed per background cron chunk | `25` |
@@ -134,10 +133,10 @@ Translations are prioritized based on plugin popularity:
 
 ## Privacy
 
-- Only plugin metadata (name, version, textdomain) is sent to the translation server
-- No personal data or site content is transmitted
-- Translations are cached locally on your server
-- Site URL is sent for usage analytics only
+- The translation service receives plugin text domains, installed versions, update-source classification when available, and requested locale codes.
+- The request body does not include the site URL, WordPress version, user IDs, names, email addresses, passwords, site content, posts, comments, or database records. The service receives the connection IP address as part of handling an HTTP request.
+- The plugin stores its cache and downloaded language packs locally. The service provider's handling, retention, and deletion of request data are governed by its [Privacy Policy](https://ultimatemultisite.com/privacy) and [Terms of Use](https://ultimatemultisite.com/terms).
+- Deactivate the plugin to stop its external requests.
 
 ## Server Requirements
 

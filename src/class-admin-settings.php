@@ -368,12 +368,20 @@ class Admin_Settings {
 
 			<div class="card">
 				<h2><?php esc_html_e( 'Privacy Notice', 'superdav-ai-language-packs' ); ?></h2>
-				<p><?php esc_html_e( 'This plugin sends plugin metadata (name, version, textdomain), the requested locale, the site URL, and the WordPress version to the translation service. No personal data, user data, or site content is transmitted. Translations are cached on your server.', 'superdav-ai-language-packs' ); ?></p>
+				<p><?php esc_html_e( 'This plugin uses the translation service to check language-pack availability and request translations. The service receives the following installation data:', 'superdav-ai-language-packs' ); ?></p>
+				<ul>
+					<li><?php esc_html_e( 'Plugin text domains and installed versions', 'superdav-ai-language-packs' ); ?></li>
+					<li><?php esc_html_e( 'Requested locale codes, including locales discovered from site, network-site, and user-profile language settings', 'superdav-ai-language-packs' ); ?></li>
+					<li><?php esc_html_e( 'Plugin update-source classification when it is available', 'superdav-ai-language-packs' ); ?></li>
+				</ul>
+				<p><?php esc_html_e( 'The request body does not include the site URL, WordPress version, user IDs, names, email addresses, passwords, site content, posts, comments, or database records. The service receives the connection IP address as part of handling an HTTP request.', 'superdav-ai-language-packs' ); ?></p>
+				<p><?php esc_html_e( 'The plugin stores its cache and downloaded language packs locally. The service provider handles request data under its current terms and privacy policy.', 'superdav-ai-language-packs' ); ?></p>
 				<p class="sd-ai-lang-packs-muted">
 					<a href="<?php echo esc_url( 'https://ultimatemultisite.com/terms' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Terms of Use', 'superdav-ai-language-packs' ); ?></a>
 					<?php echo esc_html_x( '·', 'separator between external policy links', 'superdav-ai-language-packs' ); ?>
 					<a href="<?php echo esc_url( 'https://ultimatemultisite.com/privacy' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Privacy Policy', 'superdav-ai-language-packs' ); ?></a>
 				</p>
+				<p class="sd-ai-lang-packs-muted"><?php esc_html_e( 'Deactivate the plugin to stop its external requests.', 'superdav-ai-language-packs' ); ?></p>
 			</div>
 		</div>
 		<?php

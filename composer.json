@@ -39,6 +39,8 @@
             "/.*",
             "/*",
             "!/LICENSE",
+            "!/assets/",
+            "!/assets/**",
             "!/readme.txt",
             "!/src/",
             "!/src/**",
