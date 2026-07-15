@@ -127,32 +127,21 @@ class Locale_Discovery {
 		global $wpdb;
 
 		// Read-only discovery query; only distinct locale strings are needed, not user records.
-		// phpcs:disable WordPress.DB
-		if ( $wpdb->has_cap( 'identifier_placeholders' ) ) {
-			$locales = $wpdb->get_col(
-				$wpdb->prepare(
-					'SELECT DISTINCT meta_value FROM %i WHERE meta_key = %s AND meta_value <> %s',
-					$wpdb->usermeta,
-					'locale',
-					''
-				)
-			);
-		} else {
-			$table = $this->quote_identifier( $wpdb->usermeta );
+		$table = $this->quote_identifier( $wpdb->usermeta );
 
-			// Core table name is quoted for WordPress versions before `%i` support; values are prepared below.
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
-			$locales = $wpdb->get_col(
-				$wpdb->prepare(
-					"SELECT DISTINCT meta_value FROM {$table} WHERE meta_key = %s AND meta_value <> %s",
-					'locale',
-					''
-				)
-			);
-			// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		}
+		// Core table name is quoted because this plugin supports WordPress versions before `%i` was introduced; values are prepared below.
+		// phpcs:disable WordPress.DB
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$locales = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT meta_value FROM {$table} WHERE meta_key = %s AND meta_value <> %s",
+				'locale',
+				''
+			)
+		);
+		// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		// phpcs:enable WordPress.DB
 
 		return $this->normalise_locale_list( (array) $locales );
@@ -183,36 +172,23 @@ class Locale_Discovery {
 
 		do {
 			// Read-only discovery query; fetch bounded ID batches instead of loading WP_Site objects.
-			// phpcs:disable WordPress.DB
-			if ( $wpdb->has_cap( 'identifier_placeholders' ) ) {
-				$site_ids = $wpdb->get_col(
-					$wpdb->prepare(
-						'SELECT blog_id FROM %i '
-						. 'WHERE blog_id > %d AND deleted = 0 AND spam = 0 AND archived = 0 '
-						. 'ORDER BY blog_id ASC LIMIT %d',
-						$wpdb->blogs,
-						$last_blog_id,
-						$batch_size
-					)
-				);
-			} else {
-				$table = $this->quote_identifier( $wpdb->blogs );
+			$table = $this->quote_identifier( $wpdb->blogs );
 
-				// Core table name is quoted for WordPress versions before `%i` support; values are prepared below.
-				// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
-				$site_ids = $wpdb->get_col(
-					$wpdb->prepare(
-						"SELECT blog_id FROM {$table} "
-						. 'WHERE blog_id > %d AND deleted = 0 AND spam = 0 AND archived = 0 '
-						. 'ORDER BY blog_id ASC LIMIT %d',
-						$last_blog_id,
-						$batch_size
-					)
-				);
-				// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter
-				// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			}
+			// Core table name is quoted because this plugin supports WordPress versions before `%i` was introduced; values are prepared below.
+			// phpcs:disable WordPress.DB
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
+			$site_ids = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT blog_id FROM {$table} "
+					. 'WHERE blog_id > %d AND deleted = 0 AND spam = 0 AND archived = 0 '
+					. 'ORDER BY blog_id ASC LIMIT %d',
+					$last_blog_id,
+					$batch_size
+				)
+			);
+			// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			// phpcs:enable WordPress.DB
 
 			$site_ids = array_map( 'intval', (array) $site_ids );
@@ -266,9 +242,8 @@ class Locale_Discovery {
 	/**
 	 * Prepare a locale-select query for a site's options table.
 	 *
-	 * Uses wpdb's `%i` identifier placeholder when available (WordPress 6.2+)
-	 * and falls back to strict backtick quoting for older supported WordPress
-	 * versions.
+	 * Uses strict backtick quoting for a WordPress-generated table identifier
+	 * because this plugin supports WordPress versions before `%i` was introduced.
 	 *
 	 * @since 1.0.0
 	 * @param int $site_id Site ID.
@@ -278,16 +253,6 @@ class Locale_Discovery {
 		global $wpdb;
 
 		$table = $wpdb->get_blog_prefix( $site_id ) . 'options';
-
-		if ( $wpdb->has_cap( 'identifier_placeholders' ) ) {
-			return $wpdb->prepare(
-				'SELECT option_value AS locale FROM %i WHERE option_name = %s AND option_value <> %s',
-				$table,
-				'WPLANG',
-				''
-			);
-		}
-
 		$table = $this->quote_identifier( $table );
 
 		// Table name is quoted from a WordPress-generated blog prefix; values are prepared below.
