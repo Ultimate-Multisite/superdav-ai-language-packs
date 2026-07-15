@@ -31,16 +31,25 @@ The official WordPress translation platform (translate.wordpress.org) relies on 
 
 = External Service Usage =
 
-This plugin relies on an external service to generate translations:
+This plugin requires the translation service at https://translate.ultimatemultisite.com to check availability and request AI-generated plugin language packs. Requests are made automatically after activation and during scheduled translation checks when the plugin is enabled.
+
+The service receives:
+
+* Plugin text domain and installed version for plugins that need a language pack
+* Whether each plugin uses WordPress.org updates or another update source
+* Requested locale codes, including locales discovered from site, network-site, and user-profile language settings
+* The site's URL and WordPress version
+
+The request body does not include user IDs, names, email addresses, passwords, site content, posts, comments, or database records. However, a site URL and the connection IP address received by the service can identify an installation and should be treated as installation data.
+
+The plugin stores its cache and downloaded language packs locally. The service provider's handling, retention, and deletion of request data are governed by its current Privacy Policy and Terms of Use:
 
 * **Service**: translate.ultimatemultisite.com
-* **Data Transmitted**: Plugin metadata (name, version, textdomain, site URL, WordPress version)
-* **Data NOT Transmitted**: No personal data, content, or confidential information
-* **Purpose**: Generate AI translations for missing plugin strings
+* **Purpose**: Check language-pack availability and generate requested translations
 * **Terms of Use**: https://ultimatemultisite.com/terms
 * **Privacy Policy**: https://ultimatemultisite.com/privacy
 
-Translations are cached locally on your server. No data is stored on external servers permanently.
+Deactivate the plugin to stop its external requests. Developers can also disable automatic translation checks with the `sd_ai_lang_packs_enabled` filter.
 
 = Features =
 
@@ -51,7 +60,7 @@ Translations are cached locally on your server. No data is stored on external se
 * **Priority System**: Popular plugins get translated first
 * **Caching**: Both API responses and translation files are cached
 * **WP-CLI Support**: Full command-line management
-* **Privacy Friendly**: Only sends plugin metadata, no personal data
+* **Transparent service disclosure**: Documents the installation data sent to the translation service
 
 == Installation ==
 
@@ -87,7 +96,7 @@ This plugin specifically fills the gap in plugin translations. Unlike page trans
 
 = Is my data safe? =
 
-Yes. The plugin only sends plugin metadata (name, version, textdomain) to generate translations. No personal data, user data, or site content is transmitted. All translations are cached locally.
+The plugin sends the site URL, WordPress version, requested locale codes, and limited installed-plugin metadata (text domain, version, and update source) to the translation service. It does not include user IDs, names, email addresses, passwords, site content, posts, comments, or database records in its request body. The service also receives the connection IP address as part of handling an HTTP request. Read the linked Privacy Policy and Terms of Use before activating the plugin.
 
 = What languages are supported? =
 
@@ -136,14 +145,8 @@ Initial release. No upgrade necessary.
 
 == Privacy Policy ==
 
-This plugin communicates with translate.ultimatemultisite.com to generate translations. The following data is transmitted:
+This plugin communicates with translate.ultimatemultisite.com to check language-pack availability and request translations. It sends plugin text domains, plugin versions, plugin update-source classification, requested locale codes, the site URL, and the WordPress version. The request body does not include user IDs, names, email addresses, passwords, site content, posts, comments, or database records.
 
-* Plugin textdomain (e.g., "woocommerce")
-* Plugin version
-* Site URL
-* WordPress version
-* Requested locale
+The site URL and connection IP address may identify an installation. The plugin stores its own cache and downloaded language packs locally; the service provider's processing and retention practices are described in its Privacy Policy: https://ultimatemultisite.com/privacy
 
-This data is used solely to generate translations and is not stored permanently. Translations are cached locally on your server.
-
-For more information, see our full Privacy Policy at https://ultimatemultisite.com/privacy
+You can stop plugin requests by deactivating the plugin. Developers can disable automatic translation checks with the `sd_ai_lang_packs_enabled` filter.

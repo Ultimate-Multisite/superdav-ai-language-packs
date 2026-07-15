@@ -134,10 +134,10 @@ Translations are prioritized based on plugin popularity:
 
 ## Privacy
 
-- Only plugin metadata (name, version, textdomain) is sent to the translation server
-- No personal data or site content is transmitted
-- Translations are cached locally on your server
-- Site URL is sent for usage analytics only
+- The translation service receives plugin text domains, installed versions, update-source classification, requested locale codes, the site URL, and the WordPress version.
+- The request body does not include user IDs, names, email addresses, passwords, site content, posts, comments, or database records. The site's URL and the connection IP address received by the service can identify an installation.
+- The plugin stores its cache and downloaded language packs locally. The service provider's handling, retention, and deletion of request data are governed by its [Privacy Policy](https://ultimatemultisite.com/privacy) and [Terms of Use](https://ultimatemultisite.com/terms).
+- Deactivate the plugin to stop its external requests. Developers can disable automatic translation checks with the `sd_ai_lang_packs_enabled` filter.
 
 ## Server Requirements
 
