@@ -162,9 +162,8 @@ class Admin_Settings {
 	 * @return void
 	 */
 	public function render_status_page(): void {
-		$enabled           = (bool) apply_filters( 'sd_ai_lang_packs_enabled', true );
-		$api_status        = $enabled ? $this->api_client->check_api_status() : null;
-		$api_healthy       = $enabled && ! is_wp_error( $api_status );
+		$api_status        = $this->api_client->check_api_status();
+		$api_healthy       = ! is_wp_error( $api_status );
 		$local             = $this->get_local_translation_details();
 		$stats             = $this->get_translation_statistics( $local );
 		$plugin_names      = $this->get_plugin_name_map();
@@ -182,12 +181,7 @@ class Admin_Settings {
 
 			<div class="card">
 				<h2><?php esc_html_e( 'Service Status', 'superdav-ai-language-packs' ); ?></h2>
-				<?php if ( ! $enabled ) : ?>
-					<p class="sd-ai-lang-packs-status-line">
-						<span class="dashicons dashicons-minus" aria-hidden="true"></span>
-						<?php esc_html_e( 'Automatic translation checks are disabled. This page has not contacted the translation service.', 'superdav-ai-language-packs' ); ?>
-					</p>
-				<?php elseif ( $api_healthy ) : ?>
+				<?php if ( $api_healthy ) : ?>
 					<p class="sd-ai-lang-packs-status-line">
 						<span class="dashicons dashicons-yes-alt" aria-hidden="true"></span>
 						<?php esc_html_e( 'Translation service is online and ready.', 'superdav-ai-language-packs' ); ?>
@@ -376,18 +370,18 @@ class Admin_Settings {
 				<h2><?php esc_html_e( 'Privacy Notice', 'superdav-ai-language-packs' ); ?></h2>
 				<p><?php esc_html_e( 'This plugin uses the translation service to check language-pack availability and request translations. The service receives the following installation data:', 'superdav-ai-language-packs' ); ?></p>
 				<ul>
-					<li><?php esc_html_e( 'Plugin text domains, installed versions, and update-source classification', 'superdav-ai-language-packs' ); ?></li>
+					<li><?php esc_html_e( 'Plugin text domains and installed versions', 'superdav-ai-language-packs' ); ?></li>
 					<li><?php esc_html_e( 'Requested locale codes, including locales discovered from site, network-site, and user-profile language settings', 'superdav-ai-language-packs' ); ?></li>
-					<li><?php esc_html_e( 'The site URL and WordPress version', 'superdav-ai-language-packs' ); ?></li>
+					<li><?php esc_html_e( 'Plugin update-source classification when it is available', 'superdav-ai-language-packs' ); ?></li>
 				</ul>
-				<p><?php esc_html_e( 'The request body does not include user IDs, names, email addresses, passwords, site content, posts, comments, or database records. The site URL and connection IP address received by the service can identify an installation.', 'superdav-ai-language-packs' ); ?></p>
+				<p><?php esc_html_e( 'The request body does not include the site URL, WordPress version, user IDs, names, email addresses, passwords, site content, posts, comments, or database records. The service receives the connection IP address as part of handling an HTTP request.', 'superdav-ai-language-packs' ); ?></p>
 				<p><?php esc_html_e( 'The plugin stores its cache and downloaded language packs locally. The service provider handles request data under its current terms and privacy policy.', 'superdav-ai-language-packs' ); ?></p>
 				<p class="sd-ai-lang-packs-muted">
 					<a href="<?php echo esc_url( 'https://ultimatemultisite.com/terms' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Terms of Use', 'superdav-ai-language-packs' ); ?></a>
 					<?php echo esc_html_x( '·', 'separator between external policy links', 'superdav-ai-language-packs' ); ?>
 					<a href="<?php echo esc_url( 'https://ultimatemultisite.com/privacy' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Privacy Policy', 'superdav-ai-language-packs' ); ?></a>
 				</p>
-				<p class="sd-ai-lang-packs-muted"><?php esc_html_e( 'Deactivate the plugin to stop its external requests. Developers can disable automatic translation checks with the sd_ai_lang_packs_enabled filter.', 'superdav-ai-language-packs' ); ?></p>
+				<p class="sd-ai-lang-packs-muted"><?php esc_html_e( 'Deactivate the plugin to stop its external requests.', 'superdav-ai-language-packs' ); ?></p>
 			</div>
 		</div>
 		<?php

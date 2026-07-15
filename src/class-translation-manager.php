@@ -100,10 +100,6 @@ class Translation_Manager {
      * @return void
      */
     public function refresh_translations_cache(): void {
-        if (!$this->is_enabled()) {
-            return;
-        }
-
         if (!function_exists('get_plugins')) {
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
@@ -388,7 +384,7 @@ class Translation_Manager {
      * @return array|bool Modified result.
      */
     public function filter_translations_api($result, string $type, $args) {
-        if ($type !== 'plugins' || !$this->is_enabled()) {
+        if ($type !== 'plugins') {
             return $result;
         }
 
@@ -763,25 +759,6 @@ class Translation_Manager {
     }
 
     /**
-     * Check if the plugin is enabled.
-     *
-     * @since 1.0.0
-     * @return bool True if enabled.
-     */
-    private function is_enabled(): bool {
-        /**
-         * Filter whether the plugin is enabled.
-         *
-         * Allows site owners to disable via code (e.g. a mu-plugin) without
-         * a settings page. Default: true.
-         *
-         * @since 1.0.0
-         * @param bool $enabled Default true.
-         */
-        return (bool) apply_filters('sd_ai_lang_packs_enabled', true);
-    }
-
-    /**
      * Schedule async translation request after profile change.
      *
      * Defers the slow API/network work to wp-cron so the profile save
@@ -792,9 +769,6 @@ class Translation_Manager {
      * @return void
      */
     public function schedule_translation_request_for_user(int $user_id): void {
-        if (!$this->is_enabled()) {
-            return;
-        }
         $locale = get_user_meta($user_id, 'locale', true);
         if (!is_string($locale)) {
             return;
@@ -820,10 +794,6 @@ class Translation_Manager {
      * @return void
      */
     public function maybe_request_translations_for_user(int $user_id): void {
-        if (!$this->is_enabled()) {
-            return;
-        }
-
         $locale = get_user_meta($user_id, 'locale', true);
         if (!is_string($locale)) {
             return;

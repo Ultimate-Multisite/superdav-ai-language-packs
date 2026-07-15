@@ -31,16 +31,15 @@ The official WordPress translation platform (translate.wordpress.org) relies on 
 
 = External Service Usage =
 
-This plugin requires the translation service at https://translate.ultimatemultisite.com to check availability and request AI-generated plugin language packs. Requests are made automatically after activation and during scheduled translation checks when the plugin is enabled.
+This plugin requires the translation service at https://translate.ultimatemultisite.com to check availability and request AI-generated plugin language packs. Requests are made automatically after activation and during scheduled translation checks.
 
 The service receives:
 
 * Plugin text domain and installed version for plugins that need a language pack
-* Whether each plugin uses WordPress.org updates or another update source
 * Requested locale codes, including locales discovered from site, network-site, and user-profile language settings
-* The site's URL and WordPress version
+* Plugin update-source classification when it is available
 
-The request body does not include user IDs, names, email addresses, passwords, site content, posts, comments, or database records. However, a site URL and the connection IP address received by the service can identify an installation and should be treated as installation data.
+The request body does not include the site URL, WordPress version, user IDs, names, email addresses, passwords, site content, posts, comments, or database records. The service receives the connection IP address as part of handling an HTTP request.
 
 The plugin stores its cache and downloaded language packs locally. The service provider's handling, retention, and deletion of request data are governed by its current Privacy Policy and Terms of Use:
 
@@ -49,7 +48,7 @@ The plugin stores its cache and downloaded language packs locally. The service p
 * **Terms of Use**: https://ultimatemultisite.com/terms
 * **Privacy Policy**: https://ultimatemultisite.com/privacy
 
-Deactivate the plugin to stop its external requests. Developers can also disable automatic translation checks with the `sd_ai_lang_packs_enabled` filter.
+Deactivate the plugin to stop its external requests.
 
 = Features =
 
@@ -96,7 +95,7 @@ This plugin specifically fills the gap in plugin translations. Unlike page trans
 
 = Is my data safe? =
 
-The plugin sends the site URL, WordPress version, requested locale codes, and limited installed-plugin metadata (text domain, version, and update source) to the translation service. It does not include user IDs, names, email addresses, passwords, site content, posts, comments, or database records in its request body. The service also receives the connection IP address as part of handling an HTTP request. Read the linked Privacy Policy and Terms of Use before activating the plugin.
+The plugin sends requested locale codes and limited installed-plugin metadata (text domain, version, and update source when available) to the translation service. It does not include the site URL, WordPress version, user IDs, names, email addresses, passwords, site content, posts, comments, or database records in its request body. The service receives the connection IP address as part of handling an HTTP request. Read the linked Privacy Policy and Terms of Use before activating the plugin.
 
 = What languages are supported? =
 
@@ -145,8 +144,8 @@ Initial release. No upgrade necessary.
 
 == Privacy Policy ==
 
-This plugin communicates with translate.ultimatemultisite.com to check language-pack availability and request translations. It sends plugin text domains, plugin versions, plugin update-source classification, requested locale codes, the site URL, and the WordPress version. The request body does not include user IDs, names, email addresses, passwords, site content, posts, comments, or database records.
+This plugin communicates with translate.ultimatemultisite.com to check language-pack availability and request translations. It sends plugin text domains, plugin versions, plugin update-source classification when available, and requested locale codes. The request body does not include the site URL, WordPress version, user IDs, names, email addresses, passwords, site content, posts, comments, or database records.
 
-The site URL and connection IP address may identify an installation. The plugin stores its own cache and downloaded language packs locally; the service provider's processing and retention practices are described in its Privacy Policy: https://ultimatemultisite.com/privacy
+The service receives the connection IP address as part of handling an HTTP request. The plugin stores its own cache and downloaded language packs locally; the service provider's processing and retention practices are described in its Privacy Policy: https://ultimatemultisite.com/privacy
 
-You can stop plugin requests by deactivating the plugin. Developers can disable automatic translation checks with the `sd_ai_lang_packs_enabled` filter.
+You can stop plugin requests by deactivating the plugin.

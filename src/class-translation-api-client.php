@@ -94,8 +94,6 @@ class Translation_API_Client {
                     'plugins'    => array_values($plugins),
                     'locales'    => array_values($locales),
                     'auto_approve' => false,  // Default: require approval
-                    'site_url'   => get_site_url(),
-                    'wp_version' => get_bloginfo('version'),
                 ]),
             ]
         );
