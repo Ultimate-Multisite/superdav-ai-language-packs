@@ -4,7 +4,7 @@ Tags: translation, ai, machine-translation, i18n, localization
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -72,7 +72,7 @@ Deactivate the plugin to stop its external requests.
 = From WordPress.org =
 
 1. Go to **Plugins > Add New** in your WordPress admin
-2. Search for "Superdav AI Plugin Translations"
+2. Search for "Superdav AI Language Packs"
 3. Click **Install Now** and then **Activate**
 
 = Manual Installation =
@@ -120,6 +120,9 @@ The plugin is free. The translation service is currently offered at no cost whil
 
 == Changelog ==
 
+= 1.0.1 - 2026-07-17 =
+* First WordPress.org release for Superdav AI Language Packs.
+
 = 1.0.0 - 2026-04-23 =
 * New: Automatic AI translation downloads for plugins missing official translations
 * New: Smart filtering — parses .po files to detect genuinely incomplete translations, not just missing ones
@@ -132,6 +135,9 @@ The plugin is free. The translation service is currently offered at no cost whil
 * New: Full multisite support with network-admin settings page
 
 == Upgrade Notice ==
+
+= 1.0.1 =
+First WordPress.org release for Superdav AI Language Packs.
 
 = 1.0.0 =
 Initial release. No upgrade necessary.
