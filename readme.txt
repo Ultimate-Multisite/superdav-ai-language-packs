@@ -12,18 +12,18 @@ AI language packs for installed WordPress plugins when official translations are
 
 == Description ==
 
-**Finally, your installed WordPress plugins can speak the language your site and team use.** Superdav AI Language Packs detects each non-English WordPress locale configured for your site, network, or user profiles and supplies standard AI-generated language packs when official translations are missing or incomplete.
+**Finally, your installed WordPress plugins and themes can speak the language your site and team use.** Superdav AI Language Packs detects each non-English WordPress locale configured for your site, network, or user profiles and supplies standard AI-generated language packs when official translations are missing or incomplete.
 
 Install it and use the dashboard to see translation activity, locale coverage, and available language packs. Official WordPress.org translations always take precedence.
 
-**Superdav AI Language Packs** helps by providing plugin translations that are:
+**Superdav AI Language Packs** helps by providing plugin and theme translations that are:
 
 * Automatically downloaded when needed
 * Generated on-demand using advanced language models
 * Only used when official translations are missing or incomplete
 * Always respectful of official translations (they take precedence)
 
-It translates installed plugins; it does not replace WordPress core or theme translations.
+It translates installed plugins and themes; it does not replace WordPress core translations.
 
 = How It Works =
 
@@ -35,7 +35,7 @@ It translates installed plugins; it does not replace WordPress core or theme tra
 
 = Premium plugin and theme coverage =
 
-Need a language pack for a premium plugin or theme? Managed translation coverage is available from $100 per year per product, subject to availability. Open a support request to discuss your product, locales, and coverage requirements.
+Need a language pack for a premium plugin or theme? Managed translation coverage is available. Open a support request to discuss your product, locales, and coverage requirements.
 
 = External Service Usage =
 
@@ -43,7 +43,7 @@ This plugin requires the translation service at https://translate.ultimatemultis
 
 The service receives:
 
-* Plugin text domain and installed version for plugins that need a language pack
+* Plugin or theme text domain and installed version for extensions that need a language pack
 * Requested locale codes, including locales discovered from site, network-site, and user-profile language settings
 * Plugin update-source classification when it is available
 
@@ -100,7 +100,7 @@ Deactivate the plugin to stop its external requests.
 
 = How does this differ from Google Translate or other translation plugins? =
 
-This plugin specifically fills the gap in plugin translations. Unlike page translation plugins, it downloads actual .mo/.po translation files that WordPress uses natively. It only activates when official translations from wordpress.org are missing or incomplete.
+This plugin fills gaps in plugin and theme translations. Unlike page translation plugins, it downloads actual .mo/.po translation files that WordPress uses natively. It only activates when official translations from wordpress.org are missing or incomplete.
 
 = Is my data safe? =
 
@@ -120,7 +120,7 @@ Official translations from wordpress.org always take precedence. If a human-revi
 
 = How much does this cost? =
 
-The plugin and community-plugin language packs are free while the service is in beta. Managed language-pack coverage for a premium plugin or theme starts at $100 per year per product; open a support request to discuss availability.
+The plugin and community language packs are free while the service is in beta. Managed language-pack coverage for a premium plugin or theme is available; open a support request to discuss availability.
 
 == Screenshots ==
 
