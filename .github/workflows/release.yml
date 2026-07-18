@@ -79,6 +79,9 @@ jobs:
           echo "stage_dir=${stage_dir}" >> "${GITHUB_OUTPUT}"
           echo "archive=${archive}" >> "${GITHUB_OUTPUT}"
 
+      - name: Install Subversion
+        run: sudo apt-get update && sudo apt-get install --yes subversion
+
       - name: Deploy to WordPress.org SVN
         env:
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
