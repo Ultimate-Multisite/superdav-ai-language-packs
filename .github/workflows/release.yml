@@ -1,0 +1,146 @@
+name: Release WordPress Plugin
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      release:
+        description: Existing Git tag to deploy (for example, v1.0.1)
+        required: true
+        default: v1.0.1
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release and deploy
+    runs-on: ubuntu-latest
+    env:
+      SLUG: superdav-ai-language-packs
+      INPUT_RELEASE: ${{ inputs.release }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out release source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ inputs.release || github.ref }}
+
+      - name: Validate release version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          release_ref="${INPUT_RELEASE:-${GITHUB_REF_NAME}}"
+          version="${release_ref#v}"
+          if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag must use the vMAJOR.MINOR.PATCH format."
+            exit 1
+          fi
+
+          file_version="$(tr -d '\r\n' < VERSION)"
+          header_version="$(php -r '$contents = file_get_contents($argv[1]); preg_match("/^ \* Version:\\s*(.+)$/m", $contents, $matches); echo $matches[1] ?? "";' superdav-ai-language-packs.php)"
+          readme_version="$(php -r '$contents = file_get_contents($argv[1]); preg_match("/^Stable tag:\\s*(.+)$/m", $contents, $matches); echo $matches[1] ?? "";' readme.txt)"
+
+          if [[ "${version}" != "${file_version}" || "${version}" != "${header_version}" || "${version}" != "${readme_version}" ]]; then
+            echo "Release version does not match VERSION, the plugin header, and readme.txt."
+            exit 1
+          fi
+
+          {
+            echo "version=${version}"
+            echo "archive=${SLUG}-${version}.zip"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Build plugin archive
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          stage_dir="${RUNNER_TEMP}/${SLUG}"
+          archive="${RUNNER_TEMP}/${{ steps.version.outputs.archive }}"
+          mkdir -p "${stage_dir}"
+          cp superdav-ai-language-packs.php readme.txt LICENSE "${stage_dir}/"
+          cp -R src "${stage_dir}/"
+          if [[ -d assets ]]; then
+            cp -R assets "${stage_dir}/"
+          fi
+
+          (
+            cd "${RUNNER_TEMP}"
+            zip -qr "${archive}" "${SLUG}"
+          )
+
+          echo "stage_dir=${stage_dir}" >> "${GITHUB_OUTPUT}"
+          echo "archive=${archive}" >> "${GITHUB_OUTPUT}"
+
+      - name: Deploy to WordPress.org SVN
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          VERSION: ${{ steps.version.outputs.version }}
+          STAGE_DIR: ${{ steps.package.outputs.stage_dir }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${SVN_USERNAME}" || -z "${SVN_PASSWORD}" ]]; then
+            echo "SVN_USERNAME and SVN_PASSWORD repository secrets are required."
+            exit 1
+          fi
+
+          svn_url="https://plugins.svn.wordpress.org/${SLUG}"
+          svn_dir="${RUNNER_TEMP}/svn-${SLUG}"
+
+          svn checkout --depth=immediates "${svn_url}" "${svn_dir}"
+          svn update --set-depth=infinity "${svn_dir}/trunk"
+          rsync -a --delete "${STAGE_DIR}/" "${svn_dir}/trunk/"
+
+          svn add --force "${svn_dir}/trunk"
+          while IFS= read -r path; do
+            svn delete --force "${path}"
+          done < <(svn status "${svn_dir}/trunk" | awk '/^!/ { $1 = ""; sub(/^ /, ""); print }')
+
+          if svn status --quiet "${svn_dir}/trunk" | grep -q .; then
+            svn commit "${svn_dir}/trunk" \
+              --username "${SVN_USERNAME}" \
+              --password "${SVN_PASSWORD}" \
+              --no-auth-cache \
+              --non-interactive \
+              -m "Release ${VERSION}"
+          else
+            echo "Trunk already matches the release archive."
+          fi
+
+          if svn info "${svn_url}/tags/${VERSION}" > /dev/null 2>&1; then
+            echo "The WordPress.org SVN tag ${VERSION} already exists."
+            exit 1
+          fi
+
+          svn copy "${svn_url}/trunk" "${svn_url}/tags/${VERSION}" \
+            --username "${SVN_USERNAME}" \
+            --password "${SVN_PASSWORD}" \
+            --no-auth-cache \
+            --non-interactive \
+            -m "Tag ${VERSION}"
+
+      - name: Publish GitHub release
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          ARCHIVE: ${{ steps.package.outputs.archive }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if gh release view "v${VERSION}" > /dev/null 2>&1; then
+            gh release upload "v${VERSION}" "${ARCHIVE}" --clobber
+          else
+            gh release create "v${VERSION}" "${ARCHIVE}" \
+              --title "Superdav AI Language Packs ${VERSION}" \
+              --generate-notes
+          fi
