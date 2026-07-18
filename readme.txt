@@ -4,22 +4,26 @@ Tags: translation, ai, machine-translation, i18n, localization
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Automatically provides AI-generated translations for WordPress plugins when official translations are missing or incomplete.
+AI language packs for installed WordPress plugins when official translations are missing or incomplete.
 
 == Description ==
 
-The official WordPress translation platform (translate.wordpress.org) relies on human volunteers and only supports plugins hosted in the WordPress.org plugin repository. This creates a gap for premium plugins, plugins with incomplete translations, and plugins that haven't been fully translated.
+**Finally, your installed WordPress plugins can speak the language your site and team use.** Superdav AI Language Packs detects each non-English WordPress locale configured for your site, network, or user profiles and supplies standard AI-generated language packs when official translations are missing or incomplete.
 
-**Superdav AI Language Packs** bridges this gap by providing AI-powered translations that are:
+Install it and use the dashboard to see translation activity, locale coverage, and available language packs. Official WordPress.org translations always take precedence.
+
+**Superdav AI Language Packs** helps by providing plugin translations that are:
 
 * Automatically downloaded when needed
 * Generated on-demand using advanced language models
 * Only used when official translations are missing or incomplete
 * Always respectful of official translations (they take precedence)
+
+It translates installed plugins; it does not replace WordPress core or theme translations.
 
 = How It Works =
 
@@ -28,6 +32,10 @@ The official WordPress translation platform (translate.wordpress.org) relies on 
 3. **On-Demand Generation**: Translation jobs are triggered when a real site needs them
 4. **Local Caching**: Translations are cached locally for performance
 5. **Priority System**: Popular plugins get translated first
+
+= Premium plugin and theme coverage =
+
+Need a language pack for a premium plugin or theme? Managed translation coverage is available from $100 per year per product, subject to availability. Open a support request to discuss your product, locales, and coverage requirements.
 
 = External Service Usage =
 
@@ -55,6 +63,7 @@ Deactivate the plugin to stop its external requests.
 * **Smart Detection**: Only downloads AI translations when official ones are missing
 * **On-Demand Generation**: Translation jobs triggered when needed
 * **WordPress Integration**: Uses standard WordPress translation update mechanisms
+* **All WordPress locales**: Detects every non-English locale configured by WordPress, including site, network-site, and user-profile locales
 * **Multisite Support**: Network-activated with per-site locale detection
 * **Priority System**: Popular plugins get translated first
 * **Caching**: Both API responses and translation files are cached
@@ -99,7 +108,7 @@ The plugin sends requested locale codes and limited installed-plugin metadata (t
 
 = What languages are supported? =
 
-The service currently supports: Spanish, German, French, Italian, Portuguese, Dutch, Russian, Polish, Swedish, Danish, Finnish, Hungarian, Czech, Romanian, Turkish, Greek, Chinese, and Japanese.
+Every non-English locale that WordPress can be configured to use, including the 100+ language and regional variants available through WordPress. The plugin does not use a fixed language allowlist: it discovers configured site, network-site, and user-profile locales and requests a language pack for each one.
 
 = Can I use this with existing translation plugins like Polylang or WPML? =
 
@@ -111,14 +120,19 @@ Official translations from wordpress.org always take precedence. If a human-revi
 
 = How much does this cost? =
 
-The plugin is free. The translation service is currently offered at no cost while in beta.
+The plugin and community-plugin language packs are free while the service is in beta. Managed language-pack coverage for a premium plugin or theme starts at $100 per year per product; open a support request to discuss availability.
 
 == Screenshots ==
 
-1. Status page showing service health, background activity, detected locales, and translation statistics
-2. Translation table showing installed AI language packs and queued translations
+1. Language Pack Progress shows active packs, covered plugins, languages, and the background translation workflow.
+2. The dashboard explains how AI language packs are requested, installed, and superseded by official WordPress.org translations.
 
 == Changelog ==
+
+= 1.0.2 - 2026-07-17 =
+* New: WordPress.org listing icon, banners, and dashboard screenshots.
+* New: Listing copy clarifying support for every configured WordPress locale.
+* New: Premium plugin and theme translation coverage information.
 
 = 1.0.1 - 2026-07-17 =
 * First WordPress.org release for Superdav AI Language Packs.
@@ -135,6 +149,9 @@ The plugin is free. The translation service is currently offered at no cost whil
 * New: Full multisite support with network-admin settings page
 
 == Upgrade Notice ==
+
+= 1.0.2 =
+Adds WordPress.org listing assets and clarifies locale coverage.
 
 = 1.0.1 =
 First WordPress.org release for Superdav AI Language Packs.

@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       release:
-        description: Existing Git tag to deploy (for example, v1.0.1)
+        description: Existing Git tag to deploy (for example, v1.0.2)
         required: true
-        default: v1.0.1
+        default: v1.0.2
         type: string
 
 permissions:
@@ -102,22 +102,24 @@ jobs:
 
           svn checkout --depth=immediates "${svn_url}" "${svn_dir}"
           svn update --set-depth=infinity "${svn_dir}/trunk"
+          svn update --set-depth=infinity "${svn_dir}/assets"
           rsync -a --delete "${STAGE_DIR}/" "${svn_dir}/trunk/"
+          rsync -a --delete "wordpress-org-assets/" "${svn_dir}/assets/"
 
-          svn add --force "${svn_dir}/trunk"
+          svn add --force "${svn_dir}"
           while IFS= read -r path; do
             svn delete --force "${path}"
-          done < <(svn status "${svn_dir}/trunk" | awk '/^!/ { $1 = ""; sub(/^ /, ""); print }')
+          done < <(svn status "${svn_dir}" | awk '/^!/ { $1 = ""; sub(/^ /, ""); print }')
 
-          if svn status "${svn_dir}/trunk" | grep -q .; then
-            svn commit "${svn_dir}/trunk" \
+          if svn status "${svn_dir}" | grep -q .; then
+            svn commit "${svn_dir}" \
               --username "${SVN_USERNAME}" \
               --password "${SVN_PASSWORD}" \
               --no-auth-cache \
               --non-interactive \
               -m "Release ${VERSION}"
           else
-            echo "Trunk already matches the release archive."
+            echo "WordPress.org SVN already matches the release assets."
           fi
 
           if svn info "${svn_url}/tags/${VERSION}" > /dev/null 2>&1; then

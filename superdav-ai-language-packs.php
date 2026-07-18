@@ -3,7 +3,7 @@
  * Plugin Name: Superdav AI Language Packs
  * Plugin URI: https://github.com/Ultimate-Multisite/superdav-ai-language-packs
  * Description: Automatically provides AI-generated translations for WordPress plugins when official translations are missing or incomplete from translate.wordpress.org.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: superdav42
@@ -25,7 +25,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants.
-define('SD_AI_LANG_PACKS_VERSION', '1.0.1');
+define('SD_AI_LANG_PACKS_VERSION', '1.0.2');
 define('SD_AI_LANG_PACKS_FILE', __FILE__);
 define('SD_AI_LANG_PACKS_DIR', plugin_dir_path(__FILE__));
 define('SD_AI_LANG_PACKS_URL', plugin_dir_url(__FILE__));
