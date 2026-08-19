@@ -5,7 +5,6 @@
  * Description: Automatically provides AI-generated translations for WordPress plugins when official translations are missing or incomplete from translate.wordpress.org.
  * Version: 1.0.2
  * Requires at least: 5.8
- * Tested up to: 7.1
  * Requires PHP: 7.4
  * Author: superdav42
  * Author URI: https://ultimatemultisite.com
