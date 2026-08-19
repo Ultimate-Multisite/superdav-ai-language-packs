@@ -167,6 +167,7 @@ class Translation_Manager {
         $installed    = wp_get_installed_translations('plugins');
         $available    = $this->get_available_translations_map();
         $site_locales = $this->get_site_locales();
+        $plugin_updates = get_site_transient('update_plugins');
 
         // Build the per-chunk request: textdomain → {version, slug, file}.
         // Track every locale needed across the chunk so we can send a single
@@ -203,7 +204,7 @@ class Translation_Manager {
             $batch[$textdomain]       = [
                 'textdomain' => $textdomain,
                 'version'    => $version,
-                'source'     => $this->get_plugin_source($plugin_data),
+                'source'     => $this->get_plugin_source((string) $plugin_file, $plugin_data, $plugin_updates),
             ];
             $needed_map[$textdomain]  = $needed;
             $slug_map[$textdomain]    = $slug;
@@ -637,16 +638,89 @@ class Translation_Manager {
     }
 
     /**
-     * Infer whether a plugin uses WordPress.org or another update source.
+     * Classify a plugin update source from WordPress's cached update metadata.
      *
      * @since 1.0.0
+     * @param string $plugin_file    Plugin file path used by update_plugins.
      * @param array $plugin_data Plugin header data from get_plugins().
+     * @param mixed  $plugin_updates update_plugins site transient.
      * @return string Source label for the translation API.
      */
-    private function get_plugin_source(array $plugin_data): string {
-        $update_uri = (string) ($plugin_data['UpdateURI'] ?? '');
+    private function get_plugin_source(string $plugin_file, array $plugin_data, $plugin_updates): string {
+        $update_uri = trim((string) ($plugin_data['UpdateURI'] ?? ''));
+        if ('' !== $update_uri) {
+            return 'premium';
+        }
 
-        return '' === $update_uri ? 'wporg' : 'premium';
+        if (is_object($plugin_updates)) {
+            $update_sections = get_object_vars($plugin_updates);
+            foreach (['response', 'no_update'] as $section) {
+                $updates = $update_sections[$section] ?? [];
+                if (!is_array($updates) || !isset($updates[$plugin_file])) {
+                    continue;
+                }
+
+                if ($this->is_wporg_update_metadata($updates[$plugin_file], $plugin_file)) {
+                    return 'wporg';
+                }
+            }
+        }
+
+        return 'unknown';
+    }
+
+    /**
+     * Determine whether a cached update record is supplied by WordPress.org.
+     *
+     * WordPress core records plugin-directory updates with a `w.org/plugins/`
+     * identifier. Some responses expose a WordPress.org URL instead, so only
+     * trusted update fields from that host are accepted as an alternative.
+     * This only reads cached metadata and never requests per-plugin updates.
+     *
+     * @since 1.2.1
+     * @param mixed  $update      Update record from response or no_update.
+     * @param string $plugin_file Plugin file path used by update_plugins.
+     * @return bool Whether the update record definitively identifies WordPress.org.
+     */
+    private function is_wporg_update_metadata($update, string $plugin_file): bool {
+        if (is_object($update)) {
+            $update = get_object_vars($update);
+        }
+        if (!is_array($update)) {
+            return false;
+        }
+
+        if (!empty($update['plugin']) && $plugin_file !== (string) $update['plugin']) {
+            return false;
+        }
+
+        $id = (string) ($update['id'] ?? '');
+        if (0 === strpos($id, 'w.org/plugins/')) {
+            return true;
+        }
+
+        foreach (['url', 'package', 'details_url'] as $field) {
+            if (empty($update[$field]) || !is_string($update[$field])) {
+                continue;
+            }
+
+            $host = wp_parse_url($update[$field], PHP_URL_HOST);
+            if (!is_string($host)) {
+                continue;
+            }
+
+            $host = strtolower($host);
+            if ('wordpress.org' === $host) {
+                return true;
+            }
+
+            $suffix = '.wordpress.org';
+            if (strlen($host) > strlen($suffix) && substr($host, -strlen($suffix)) === $suffix) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -815,6 +889,7 @@ class Translation_Manager {
         }
         $installed = wp_get_installed_translations('plugins');
         $available = $this->get_available_translations_map();
+        $plugin_updates = get_site_transient('update_plugins');
 
         // Build one batch request for every plugin missing this locale.
         $batch = [];
@@ -830,6 +905,7 @@ class Translation_Manager {
             $batch[] = [
                 'textdomain' => $textdomain,
                 'version'    => $plugin_data['Version'] ?? '1.0.0',
+                'source'     => $this->get_plugin_source((string) $plugin_file, $plugin_data, $plugin_updates),
             ];
         }
 
