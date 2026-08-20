@@ -130,6 +130,8 @@ The plugin and community language packs are free while the service is in beta. M
 == Changelog ==
 
 = 1.0.2 - 2026-07-17 =
+Version 1.0.2 - Released on 2026-08-19
+- Improved: WordPress compatibility metadata now reflects testing through WordPress 7.1.
 * New: WordPress.org listing icon, banners, and dashboard screenshots.
 * New: Listing copy clarifying support for every configured WordPress locale.
 * New: Premium plugin and theme translation coverage information.
