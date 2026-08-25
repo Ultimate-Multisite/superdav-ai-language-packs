@@ -230,7 +230,14 @@ class Translation_Manager {
         $queued  = $response['queued'] ?? ($response['requested'] ?? []);
         $state['pending'] += is_countable($queued) ? count($queued) : (int) ($response['queue_length'] ?? 0);
 
-        foreach ($results as $textdomain => $by_locale) {
+        foreach ($results as $result_key => $by_locale) {
+            // Current servers namespace result keys by target type (for example,
+            // "plugin:akismet"). Continue accepting the legacy plain-textdomain
+            // shape so clients remain compatible during rolling upgrades.
+            $textdomain = 0 === strpos($result_key, 'plugin:')
+                ? substr($result_key, strlen('plugin:'))
+                : $result_key;
+
             if (!isset($needed_map[$textdomain])) {
                 continue;
             }
