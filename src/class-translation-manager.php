@@ -75,6 +75,8 @@ class Translation_Manager {
         // call for this hook so the event always has a handler.
         add_action('sd_ai_lang_packs_refresh_cache', [$this, 'refresh_translations_cache']);
 
+        $this->schedule_stale_refresh();
+
         // Schedule cleanup of old translation files.
         add_action('sd_ai_lang_packs_cleanup_old_translations', [$this, 'cleanup_old_translations']);
 
@@ -87,6 +89,29 @@ class Translation_Manager {
         add_action('profile_update', [$this, 'schedule_translation_request_for_user']);
         add_action('user_register', [$this, 'schedule_translation_request_for_user']);
         add_action('sd_ai_lang_packs_request_user_locale', [$this, 'maybe_request_translations_for_user']);
+    }
+
+    /**
+     * Ensure translation progress is refreshed even when WordPress does not
+     * invoke the translations API hook for an extended period.
+     *
+     * @since 1.0.5
+     * @return void
+     */
+    private function schedule_stale_refresh(): void {
+        if (wp_next_scheduled('sd_ai_lang_packs_refresh_cache')) {
+            return;
+        }
+
+        $last_check = get_site_option('sd_ai_lang_packs_last_check', null);
+        $last_check_timestamp = is_string($last_check)
+            ? (int) get_gmt_from_date($last_check, 'U')
+            : 0;
+        if ($last_check_timestamp > time() - HOUR_IN_SECONDS) {
+            return;
+        }
+
+        wp_schedule_single_event(time() + 5, 'sd_ai_lang_packs_refresh_cache');
     }
 
     /**
@@ -241,9 +266,16 @@ class Translation_Manager {
             if (!isset($needed_map[$textdomain])) {
                 continue;
             }
+            if (!is_array($by_locale)) {
+                continue;
+            }
             foreach ($by_locale as $locale => $entry) {
                 // Only count locales the client actually wants for this plugin.
-                if (!in_array($locale, $needed_map[$textdomain], true)) {
+                if (!in_array($locale, $needed_map[$textdomain], true) || !is_array($entry)) {
+                    continue;
+                }
+                if (in_array($entry['status'] ?? '', ['requested', 'pending', 'processing'], true)) {
+                    $state['pending']++;
                     continue;
                 }
                 if (empty($entry['package_url'])) {
@@ -283,12 +315,16 @@ class Translation_Manager {
         $pending = (int) ($state['pending'] ?? 0);
         $checked = count($state['plugins'] ?? []);
 
+        $installed_entries = get_site_option('sd_ai_lang_packs_installed_translations', []);
+        $installed_entries = is_array($installed_entries) ? $installed_entries : [];
+
         if (!empty($entries) && is_array($entries)) {
             $this->install_translation_packages($entries);
+            $installed_entries = $this->merge_translation_entries($installed_entries, $entries);
         }
 
-        if (0 === $pending || !empty($entries)) {
-            update_site_option('sd_ai_lang_packs_installed_translations', is_array($entries) ? $entries : []);
+        if (!empty($installed_entries)) {
+            update_site_option('sd_ai_lang_packs_installed_translations', $installed_entries);
         }
 
         // Only cache the translation list when there are no server-side pending
@@ -308,10 +344,42 @@ class Translation_Manager {
         update_site_option('sd_ai_lang_packs_last_check', current_time('mysql'));
         update_site_option('sd_ai_lang_packs_plugins_checked', $checked);
         update_site_option('sd_ai_lang_packs_pending_count', $pending);
-        update_site_option('sd_ai_lang_packs_available_count', count($entries));
+        update_site_option('sd_ai_lang_packs_available_count', count($installed_entries));
         set_site_transient('sd_ai_lang_packs_pending_count', $pending, DAY_IN_SECONDS);
 
         delete_site_option('sd_ai_lang_packs_refresh_state');
+    }
+
+    /**
+     * Merge newly available packages into the persistent AI translation ledger.
+     *
+     * A completed scan may contain no new packages because installed AI packs
+     * use normal WordPress filenames. Preserve their provenance so the status
+     * page can continue to report the value delivered by prior scans.
+     *
+     * @since 1.0.5
+     * @param array $existing Previously installed AI translation entries.
+     * @param array $fresh    Entries returned by the completed scan.
+     * @return array<int, array<string, mixed>> Merged entries.
+     */
+    private function merge_translation_entries(array $existing, array $fresh): array {
+        $merged = [];
+
+        foreach (array_merge($existing, $fresh) as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+
+            $textdomain = (string) ($entry['textdomain'] ?? $entry['slug'] ?? '');
+            $language   = (string) ($entry['language'] ?? '');
+            if ('' === $textdomain || '' === $language) {
+                continue;
+            }
+
+            $merged[$textdomain . '|' . $language] = $entry;
+        }
+
+        return array_values($merged);
     }
 
     /**
