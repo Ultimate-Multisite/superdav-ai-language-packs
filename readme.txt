@@ -4,7 +4,7 @@ Tags: translation, ai, machine-translation, i18n, localization
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -128,6 +128,9 @@ The plugin and community language packs are free while the service is in beta. M
 2. The dashboard explains how AI language packs are requested, installed, and superseded by official WordPress.org translations.
 
 == Changelog ==
+
+= 1.0.3 - 2026-08-25 =
+- Fix: Completed AI language packs now install correctly when returned by the translation service.
 
 = 1.0.2 - 2026-07-17 =
 Version 1.0.2 - Released on 2026-08-19
