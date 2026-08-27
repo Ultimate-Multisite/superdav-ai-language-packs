@@ -23,6 +23,22 @@ defined( 'ABSPATH' ) || exit;
 class Admin_Settings {
 
 	/**
+	 * Public project sponsorship page.
+	 *
+	 * @since 1.1.0
+	 * @var string
+	 */
+	private const SPONSOR_URL = 'https://github.com/sponsors/superdav42';
+
+	/**
+	 * Public project request tracker.
+	 *
+	 * @since 1.1.0
+	 * @var string
+	 */
+	private const REQUEST_URL = 'https://github.com/Ultimate-Multisite/superdav-ai-language-packs/issues';
+
+	/**
 	 * API client instance.
 	 *
 	 * @since 1.0.0
@@ -353,6 +369,21 @@ class Admin_Settings {
 						<?php endforeach; ?>
 					</ul>
 				<?php endif; ?>
+			</div>
+
+			<div class="card">
+				<h2><?php esc_html_e( 'Sponsored Premium Coverage', 'superdav-ai-language-packs' ); ?></h2>
+				<p><?php esc_html_e( 'Premium plugins and themes can receive initial or maintained language-pack coverage through community or vendor sponsorship. Existing community language packs remain free for every site.', 'superdav-ai-language-packs' ); ?></p>
+				<ul>
+					<li><?php esc_html_e( 'A community campaign target is the greater of $299 or $99 for each requested language.', 'superdav-ai-language-packs' ); ?></li>
+					<li><?php esc_html_e( 'Vendor launch sponsorship starts at $750 and includes initial compatibility work and up to three languages.', 'superdav-ai-language-packs' ); ?></li>
+					<li><?php esc_html_e( 'Maintained vendor coverage starts at $149 per month after launch.', 'superdav-ai-language-packs' ); ?></li>
+				</ul>
+				<p>
+					<a class="button button-primary" href="<?php echo esc_url( self::REQUEST_URL ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Request sponsored coverage', 'superdav-ai-language-packs' ); ?></a>
+					<a class="button" href="<?php echo esc_url( self::SPONSOR_URL ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Sponsor the project', 'superdav-ai-language-packs' ); ?></a>
+				</p>
+				<p class="sd-ai-lang-packs-muted"><?php esc_html_e( 'These links open GitHub only after you click them. The plugin sends no site data with the links. Sponsorship requests are public, so never include licence keys, proprietary files, payment details, or other secrets.', 'superdav-ai-language-packs' ); ?></p>
 			</div>
 
 			<div class="card">
