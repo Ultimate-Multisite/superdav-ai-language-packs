@@ -404,7 +404,7 @@ class Translation_Manager {
         $upgrader = new \Language_Pack_Upgrader(new \Automatic_Upgrader_Skin());
 
         foreach ($entries as $entry) {
-            if (!is_array($entry) || empty($entry['package']) || empty($entry['slug']) || empty($entry['language'])) {
+            if (empty($entry['package']) || empty($entry['slug']) || empty($entry['language'])) {
                 continue;
             }
 
@@ -423,7 +423,7 @@ class Translation_Manager {
                 'autoupdate' => true,
             ];
 
-            $upgrader->upgrade($language_update, ['clear_update_cache' => false]);
+            $upgrader->bulk_upgrade([$language_update], ['clear_update_cache' => false]);
         }
     }
 
@@ -518,35 +518,6 @@ class Translation_Manager {
         }
 
         return sanitize_title($slug);
-    }
-
-    /**
-     * Get plugin file from slug.
-     *
-     * @since 1.0.0
-     * @param string $slug Plugin slug.
-     * @return string|null Plugin file path or null.
-     */
-    private function get_plugin_file_from_slug(string $slug): ?string {
-        if (!function_exists('get_plugins')) {
-            require_once ABSPATH . 'wp-admin/includes/plugin.php';
-        }
-
-        $plugins = get_plugins();
-
-        foreach ($plugins as $plugin_file => $plugin_data) {
-            $plugin_file_str = (string) $plugin_file;
-            $plugin_slug = dirname($plugin_file_str);
-            if ('.' === $plugin_slug) {
-                $plugin_slug = basename($plugin_file_str, '.php');
-            }
-
-            if ($plugin_slug === $slug) {
-                return $plugin_file_str;
-            }
-        }
-
-        return null;
     }
 
     /**
@@ -679,7 +650,7 @@ class Translation_Manager {
         }
 
         foreach ($translation_updates as $entry) {
-            if (!is_object($entry) || 'plugin' !== ($entry->type ?? '')) {
+            if ('plugin' !== ($entry->type ?? '')) {
                 continue;
             }
             if (empty($entry->slug) || empty($entry->language)) {

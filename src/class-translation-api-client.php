@@ -133,7 +133,7 @@ class Translation_API_Client {
      * @param string $textdomain Plugin textdomain.
      * @param string $version    Plugin version.
      * @param string $locale     Locale code.
-     * @return array|WP_Error    Translation status or WP_Error.
+     * @return array|\WP_Error   Translation status or WP_Error.
      */
     public function get_translation_status(string $textdomain, string $version, string $locale) {
         $cache_key = 'sd_ai_lang_packs_status_' . md5($textdomain . $version . $locale);
@@ -206,7 +206,7 @@ class Translation_API_Client {
      * Check API health/status.
      *
      * @since 1.0.0
-     * @return array|WP_Error API status information or WP_Error.
+     * @return array|\WP_Error API status information or WP_Error.
      */
     public function check_api_status() {
         $cache_key = 'sd_ai_lang_packs_api_status';
