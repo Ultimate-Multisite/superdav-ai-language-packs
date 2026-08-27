@@ -48,7 +48,8 @@
         ]
     },
     "scripts": {
-        "build": "@composer archive-project --format=zip --dir=./ --file=superdav-ai-language-packs"
+        "build": "@composer archive-project --format=zip --dir=./ --file=superdav-ai-language-packs",
+        "phpstan": "@php vendor/bin/phpstan analyse --no-progress"
     },
     "require-dev": {
         "phpstan/extension-installer": "^1.1",

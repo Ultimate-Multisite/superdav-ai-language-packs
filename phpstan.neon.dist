@@ -2,9 +2,10 @@ parameters:
     level: 5
     bootstrapFiles:
         - vendor/szepeviktor/phpstan-wordpress/bootstrap.php
+        - src/phpstan-bootstrap.php
     paths:
-        - .
+        - ./src
     excludePaths:
-        - ./vendor
-        - ./tests
-        - ./node_modules
+        - ?./vendor
+        - ?./tests
+        - ?./node_modules

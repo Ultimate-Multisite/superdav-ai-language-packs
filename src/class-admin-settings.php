@@ -207,9 +207,7 @@ class Admin_Settings {
 						<span class="dashicons dashicons-warning" aria-hidden="true"></span>
 						<?php esc_html_e( 'Translation service is currently unavailable. Translations will resume automatically when the service recovers.', 'superdav-ai-language-packs' ); ?>
 					</p>
-					<?php if ( is_wp_error( $api_status ) ) : ?>
-						<p class="description"><code><?php echo esc_html( $api_status->get_error_message() ); ?></code></p>
-					<?php endif; ?>
+					<p class="description"><code><?php echo esc_html( $api_status->get_error_message() ); ?></code></p>
 				<?php endif; ?>
 			</div>
 
