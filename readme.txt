@@ -1,5 +1,6 @@
 === Superdav AI Language Packs ===
 Contributors: superdav42
+Donate link: https://github.com/sponsors/superdav42
 Tags: translation, ai, machine-translation, i18n, localization
 Requires at least: 5.8
 Tested up to: 7.1
@@ -35,7 +36,9 @@ It translates installed plugins and themes; it does not replace WordPress core t
 
 = Premium plugin and theme coverage =
 
-Need a language pack for a premium plugin or theme? Managed translation coverage is available. Open a support request to discuss your product, locales, and coverage requirements.
+Need a language pack for a premium plugin or theme? A community campaign target is the greater of $299 or $99 for each requested language. Vendor launch sponsorship starts at $750, and maintained coverage starts at $149 per month with a 12-month term.
+
+Use the optional links on the plugin status page to request coverage or sponsor the project. Every request is reviewed for technical feasibility and distribution rights before work is accepted. Existing community language packs remain free.
 
 = External Service Usage =
 
@@ -57,6 +60,8 @@ The plugin stores its cache and downloaded language packs locally. The service p
 * **Privacy Policy**: https://ultimatemultisite.com/privacy
 
 Deactivate the plugin to stop its external requests.
+
+The status page also contains optional links to the project's GitHub issue tracker and GitHub Sponsors profile. GitHub is contacted only after an administrator clicks one of those links. The plugin does not add the site URL, installed-product list, locale list, or other site data to the links. Sponsorship requests are public; do not include licence keys, proprietary files, payment details, or other secrets.
 
 = Features =
 
@@ -120,7 +125,7 @@ Official translations from wordpress.org always take precedence. If a human-revi
 
 = How much does this cost? =
 
-The plugin and community language packs are free while the service is in beta. Managed language-pack coverage for a premium plugin or theme is available; open a support request to discuss availability.
+The plugin and existing community language packs are free. An optional community campaign target is the greater of $299 or $99 for each requested language. Vendor launch sponsorship starts at $750, maintained coverage starts at $149 per month with a 12-month term, and larger programmes are quoted separately. A request creates no payment or delivery obligation until its scope is accepted in writing.
 
 == Screenshots ==
 

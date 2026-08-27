@@ -19,6 +19,21 @@ The official WordPress translation platform (translate.wordpress.org) relies on 
 - Only used when official translations are missing or incomplete
 - Always respectful of official translations (they take precedence)
 
+## Sponsor Premium Coverage
+
+The plugin and existing community language packs remain free. Users, agencies, and premium-plugin vendors can fund initial delivery or maintained coverage for products that WordPress.org cannot host or translate.
+
+Published launch offers:
+
+| Offer | Price | Intended outcome |
+|-------|------:|------------------|
+| Community campaign | Greater of $299 or $99 per requested language | Fund feasibility and initial language-pack delivery for a requested premium product |
+| Vendor launch | $750 once | Compatibility assessment, initial delivery, and up to three languages |
+| Vendor maintenance | $149/month, 12-month term | One product, up to five maintained languages, release monitoring, and quarterly reporting |
+| Vendor growth | $349/month, 12-month term | One product family, up to 15 languages, priority refreshes, terminology rules, and monthly reporting |
+
+Read [SPONSORSHIP.md](SPONSORSHIP.md) before funding or requesting work. Requests are reviewed for technical feasibility and distribution rights before any deliverable is accepted. General GitHub sponsorship supports the project but does not create a specific delivery obligation unless the request is accepted in writing.
+
 ## How It Works
 
 1. **Automatic Detection**: When WordPress checks for plugin updates, the plugin detects which plugins need translations
@@ -137,6 +152,7 @@ Translations are prioritized based on plugin popularity:
 - The request body does not include the site URL, WordPress version, user IDs, names, email addresses, passwords, site content, posts, comments, or database records. The service receives the connection IP address as part of handling an HTTP request.
 - The plugin stores its cache and downloaded language packs locally. The service provider's handling, retention, and deletion of request data are governed by its [Privacy Policy](https://ultimatemultisite.com/privacy) and [Terms of Use](https://ultimatemultisite.com/terms).
 - Deactivate the plugin to stop its external requests.
+- The optional sponsorship and coverage-request links open GitHub only when an administrator clicks them. The plugin does not append the site URL, installed-product list, locale list, or other site data to those links.
 
 ## Server Requirements
 

@@ -1,0 +1,118 @@
+name: Sponsored premium coverage
+description: Request community- or vendor-funded language-pack support for a premium plugin or theme
+title: "[Sponsored coverage]: "
+labels:
+  - sponsorship
+  - sponsor:needs-review
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping make premium WordPress products accessible in more languages.
+
+        This issue is public. Do not include licence keys, proprietary source files, customer data, payment details, private email addresses, or other secrets. Submitting a request does not create a payment or delivery obligation. The maintainers will first confirm feasibility, distribution rights, scope, and pricing.
+
+  - type: dropdown
+    id: sponsorship_type
+    attributes:
+      label: Sponsorship route
+      options:
+        - Community campaign
+        - Vendor launch sponsorship
+        - Vendor maintained sponsorship
+        - Vendor growth sponsorship
+        - Human review quote
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target_type
+    attributes:
+      label: Product type
+      options:
+        - Premium plugin
+        - Premium theme
+        - Free product outside WordPress.org
+    validations:
+      required: true
+
+  - type: input
+    id: product_name
+    attributes:
+      label: Product name
+      placeholder: Example Plugin Pro
+    validations:
+      required: true
+
+  - type: input
+    id: textdomain
+    attributes:
+      label: WordPress text domain
+      description: Enter the exact text domain used by the product.
+      placeholder: example-plugin-pro
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Current product version
+      placeholder: 2.4.1
+    validations:
+      required: true
+
+  - type: input
+    id: product_url
+    attributes:
+      label: Public product page
+      description: Optional. Link only to the vendor's public product page; never link to a private download.
+
+  - type: textarea
+    id: locales
+    attributes:
+      label: Requested WordPress locales
+      description: List locale codes such as de_DE, es_ES, and fr_FR, one per line.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: relationship
+    attributes:
+      label: Your relationship to the product
+      options:
+        - Product owner or authorized vendor representative
+        - Agency or implementer
+        - Product user
+        - Community contributor
+    validations:
+      required: true
+
+  - type: textarea
+    id: distribution_authority
+    attributes:
+      label: Distribution authority or proposed licensing route
+      description: Explain whether you own the product, represent its vendor, have written distribution permission, or need the maintainers to seek vendor permission. Do not attach private files or licence keys.
+    validations:
+      required: true
+
+  - type: textarea
+    id: need
+    attributes:
+      label: Coverage need
+      description: Explain the affected audience, release frequency, priority locales, and any known translation gaps.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: acknowledgement
+    attributes:
+      label: Public-request acknowledgement
+      options:
+        - label: I have not included licence keys, private downloads, proprietary files, personal data, payment details, or other secrets.
+          required: true
+        - label: I understand that maintainers must confirm technical feasibility and distribution rights before accepting funded work.
+          required: true
+        - label: I understand that AI-generated translations are not guaranteed to be legally or linguistically suitable without separately scoped human review.
+          required: true
+        - label: I can receive GitHub notifications on this account; maintainers may use this issue to arrange a private follow-up channel after feasibility review.
+          required: true
