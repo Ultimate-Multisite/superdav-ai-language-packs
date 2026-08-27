@@ -36,7 +36,7 @@ class Admin_Settings {
 	 * @since 1.1.0
 	 * @var string
 	 */
-	private const REQUEST_URL = 'https://github.com/Ultimate-Multisite/superdav-ai-language-packs/issues';
+	private const REQUEST_URL = 'https://github.com/Ultimate-Multisite/superdav-ai-language-packs/issues/new?template=sponsorship-request.yml';
 
 	/**
 	 * API client instance.

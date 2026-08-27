@@ -29,8 +29,8 @@ Published launch offers:
 |-------|------:|------------------|
 | Community campaign | Greater of $299 or $99 per requested language | Fund feasibility and initial language-pack delivery for a requested premium product |
 | Vendor launch | $750 once | Compatibility assessment, initial delivery, and up to three languages |
-| Vendor maintenance | $149/month | One product, up to five maintained languages, release monitoring, and quarterly reporting |
-| Vendor growth | $349/month | One product family, up to 15 languages, priority refreshes, terminology rules, and monthly reporting |
+| Vendor maintenance | $149/month, 12-month term | One product, up to five maintained languages, release monitoring, and quarterly reporting |
+| Vendor growth | $349/month, 12-month term | One product family, up to 15 languages, priority refreshes, terminology rules, and monthly reporting |
 
 Read [SPONSORSHIP.md](SPONSORSHIP.md) before funding or requesting work. Requests are reviewed for technical feasibility and distribution rights before any deliverable is accepted. General GitHub sponsorship supports the project but does not create a specific delivery obligation unless the request is accepted in writing.
 

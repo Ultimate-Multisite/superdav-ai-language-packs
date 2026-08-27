@@ -32,7 +32,11 @@ Prices are launch offers in US dollars, excluding applicable taxes and payment-p
 
 A contribution is tied to a specific deliverable only when the maintainers explicitly accept the request in writing and identify its funded scope. Vendor agreements are invoiced after feasibility review; the WordPress plugin and GitHub issue tracker never collect card data.
 
-Community campaigns are activated only after their published threshold is fully funded. If work becomes impossible before acceptance, no delivery promise exists. If an accepted paid engagement later becomes impossible, the written agreement controls refund, credit, or replacement options.
+Maintainers do not open a community campaign until technical feasibility and distribution rights are confirmed. The accepted public issue must then identify a campaign reference, approved payment channel, target, attribution method, closing date, and the refund or credit rule that applies if the target is not reached or delivery later becomes impossible.
+
+Only payments recorded against that accepted campaign reference count toward its target. Public progress reports show aggregate funding; contributor identities are published only with consent. GitHub sponsorship received before campaign acceptance remains general project support and is not retrospectively earmarked. Community delivery begins after the accepted campaign reaches its target. The campaign's written terms control refunds or credits; funds are not converted to general support without the contributor's consent.
+
+If feasibility fails before written acceptance, no campaign is opened and no campaign-specific payment should be requested. If an accepted vendor engagement later becomes impossible, its written agreement controls refund, credit, or replacement options.
 
 ## What sponsorship includes
 

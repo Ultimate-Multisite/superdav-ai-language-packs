@@ -36,7 +36,7 @@ It translates installed plugins and themes; it does not replace WordPress core t
 
 = Premium plugin and theme coverage =
 
-Need a language pack for a premium plugin or theme? A community campaign target is the greater of $299 or $99 for each requested language. Vendor launch sponsorship starts at $750, and maintained coverage starts at $149 per month.
+Need a language pack for a premium plugin or theme? A community campaign target is the greater of $299 or $99 for each requested language. Vendor launch sponsorship starts at $750, and maintained coverage starts at $149 per month with a 12-month term.
 
 Use the optional links on the plugin status page to request coverage or sponsor the project. Every request is reviewed for technical feasibility and distribution rights before work is accepted. Existing community language packs remain free.
 
@@ -125,7 +125,7 @@ Official translations from wordpress.org always take precedence. If a human-revi
 
 = How much does this cost? =
 
-The plugin and existing community language packs are free. An optional community campaign target is the greater of $299 or $99 for each requested language. Vendor launch sponsorship starts at $750, maintained coverage starts at $149 per month, and larger programmes are quoted separately. A request creates no payment or delivery obligation until its scope is accepted in writing.
+The plugin and existing community language packs are free. An optional community campaign target is the greater of $299 or $99 for each requested language. Vendor launch sponsorship starts at $750, maintained coverage starts at $149 per month with a 12-month term, and larger programmes are quoted separately. A request creates no payment or delivery obligation until its scope is accepted in writing.
 
 == Screenshots ==
 
