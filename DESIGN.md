@@ -3,8 +3,10 @@
 ## Brand direction
 
 - Use a deep navy-to-blue gradient with cyan, violet, and teal accents.
-- The visual mark is a rounded speech bubble with three language dots and a translation spark.
+- The visual mark is a speech bubble shaped around a globe, completed by a cyan AI spark. It should communicate translation coverage without relying on text.
 - Keep listing assets simple, nonverbal, and high-contrast so they remain legible at WordPress.org's small icon sizes.
+- Lead listing copy and banners with the exact sentence: "Fill in missing plugin and theme translations with AI."
+- Pair the core promise with a restrained "Free • High-quality" proof point; avoid inflated quality claims.
 
 ## Asset source
 
