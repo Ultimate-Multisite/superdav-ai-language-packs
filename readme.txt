@@ -9,20 +9,23 @@ Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI language packs for installed WordPress plugins when official translations are missing or incomplete.
+Fill in missing plugin and theme translations with AI.
 
 == Description ==
 
-**Finally, your installed WordPress plugins and themes can speak the language your site and team use.** Superdav AI Language Packs detects each non-English WordPress locale configured for your site, network, or user profiles and supplies standard AI-generated language packs when official translations are missing or incomplete.
+**Fill in missing plugin and theme translations with AI.** Superdav AI Language Packs gives your site free, high-quality language packs for the plugins and themes you already use.
 
-Install it and use the dashboard to see translation activity, locale coverage, and available language packs. Official WordPress.org translations always take precedence.
+The plugin detects every non-English WordPress locale configured for your site, network, or user profiles. When an official translation is unavailable or incomplete, it requests a context-aware AI translation and installs it through WordPress's standard language-pack system. Official WordPress.org translations always take precedence.
 
-**Superdav AI Language Packs** helps by providing plugin and theme translations that are:
+The plugin and translation service are free to use. Translation generation is designed for quality, using advanced language models to produce natural, context-aware wording rather than literal word-for-word substitutions.
 
+**Superdav AI Language Packs** provides translations that are:
+
+* Free to generate and download
+* Built for natural, high-quality results
 * Automatically downloaded when needed
-* Generated on-demand using advanced language models
 * Only used when official translations are missing or incomplete
-* Always respectful of official translations (they take precedence)
+* Replaced automatically when an official translation becomes available
 
 It translates installed plugins and themes; it does not replace WordPress core translations.
 
@@ -36,7 +39,7 @@ It translates installed plugins and themes; it does not replace WordPress core t
 
 = Premium plugin and theme coverage =
 
-Need a language pack for a premium plugin or theme? A community campaign target is the greater of $299 or $99 for each requested language. Vendor launch sponsorship starts at $750, and maintained coverage starts at $149 per month with a 12-month term.
+The plugin and translation service are free. Existing community language packs also remain free. Optional sponsorship is available for users or vendors who want to fund priority work, premium-product compatibility, or maintained coverage.
 
 Use the optional links on the plugin status page to request coverage or sponsor the project. Every request is reviewed for technical feasibility and distribution rights before work is accepted. Existing community language packs remain free.
 
@@ -66,6 +69,8 @@ The status page also contains optional links to the project's GitHub issue track
 = Features =
 
 * **Smart Detection**: Only downloads AI translations when official ones are missing
+* **Free Service**: Generates and downloads community language packs at no cost
+* **Quality-Focused AI**: Produces natural, context-aware translations instead of simple word substitutions
 * **On-Demand Generation**: Translation jobs triggered when needed
 * **WordPress Integration**: Uses standard WordPress translation update mechanisms
 * **All WordPress locales**: Detects every non-English locale configured by WordPress, including site, network-site, and user-profile locales
@@ -125,7 +130,11 @@ Official translations from wordpress.org always take precedence. If a human-revi
 
 = How much does this cost? =
 
-The plugin and existing community language packs are free. An optional community campaign target is the greater of $299 or $99 for each requested language. Vendor launch sponsorship starts at $750, maintained coverage starts at $149 per month with a 12-month term, and larger programmes are quoted separately. A request creates no payment or delivery obligation until its scope is accepted in writing.
+The plugin and translation service are free to use, including generated community language packs. Optional sponsorship is available for priority work, premium-product compatibility, and maintained vendor coverage, but it is not required to use the service.
+
+= How good are the AI translations? =
+
+The service uses advanced language models to create natural, context-aware translations and standard WordPress language packs. AI can still make mistakes, so official human-reviewed WordPress.org translations always take precedence when available.
 
 == Screenshots ==
 

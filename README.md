@@ -1,27 +1,30 @@
-# Superdav AI Plugin Translations
+# Superdav AI Language Packs
 
 [![Download Plugin Now](https://img.shields.io/github/v/release/Ultimate-Multisite/ultimate-ai-plugin-translations?style=for-the-badge&label=Download+Plugin+Now&color=0073aa)](https://github.com/Ultimate-Multisite/ultimate-ai-plugin-translations/releases/latest/download/superdav-ai-plugin-translations.zip) &nbsp; Upload the zip to WordPress like any other plugin
 
-A WordPress plugin that automatically provides AI-generated translations for WordPress plugins when official translations from translate.wordpress.org are missing or incomplete.
+**Fill in missing plugin and theme translations with AI.**
+
+Superdav AI Language Packs provides free, high-quality, context-aware language packs when official WordPress.org translations are missing or incomplete. Official translations always take precedence.
 
 ## Overview
 
-The official WordPress translation platform (translate.wordpress.org) relies on human volunteers and only supports plugins hosted in the official WordPress.org plugin repository. This creates a gap for:
+The official WordPress translation platform relies on human volunteers and only supports extensions hosted in the WordPress.org repositories. This creates a gap for:
 
-- Premium plugins not hosted on wordpress.org
-- Plugins with incomplete translations
-- Plugins that haven't been fully translated by volunteers
+- Premium plugins and themes not hosted on WordPress.org
+- Plugins and themes with incomplete translations
+- Extensions that have not yet been translated by volunteers
 
-**Superdav AI Plugin Translations** bridges this gap by providing AI-powered translations that are:
+The plugin and translation service are free to use. Advanced language models generate natural, context-aware translations rather than simple word-for-word substitutions. Language packs are:
 
+- Free to generate and download
+- Built for natural, high-quality results
 - Automatically downloaded when needed
-- Generated on-demand using advanced language models
 - Only used when official translations are missing or incomplete
-- Always respectful of official translations (they take precedence)
+- Replaced automatically when an official translation becomes available
 
 ## Sponsor Premium Coverage
 
-The plugin and existing community language packs remain free. Users, agencies, and premium-plugin vendors can fund initial delivery or maintained coverage for products that WordPress.org cannot host or translate.
+The plugin, translation service, and existing community language packs remain free. Users, agencies, and premium-plugin vendors can optionally fund priority delivery or maintained coverage for products that WordPress.org cannot host or translate.
 
 Published launch offers:
 
