@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Superdav AI Language Packs
  * Plugin URI: https://github.com/Ultimate-Multisite/superdav-ai-language-packs
- * Description: Automatically provides AI-generated translations for WordPress plugins when official translations are missing or incomplete from translate.wordpress.org.
+ * Description: Automatically provides AI-generated gap-fill translations for WordPress core and plugins when official translations are missing or incomplete from translate.wordpress.org.
  * Version: 1.0.4
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -103,7 +103,10 @@ function deactivate(): void
     delete_site_option('sd_ai_lang_packs_refresh_state');
     delete_site_option('sd_ai_lang_packs_last_check');
     delete_site_option('sd_ai_lang_packs_plugins_checked');
+    delete_site_option('sd_ai_lang_packs_core_checked');
     delete_site_option('sd_ai_lang_packs_pending_count');
+    delete_site_option('sd_ai_lang_packs_plugin_pending_count');
+    delete_site_option('sd_ai_lang_packs_core_pending_count');
     delete_site_option('sd_ai_lang_packs_available_count');
     delete_site_option('sd_ai_lang_packs_installed_translations');
 

@@ -9,11 +9,11 @@ Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Fill in missing plugin and theme translations with AI.
+Fill in missing WordPress core, plugin, and theme translations with AI.
 
 == Description ==
 
-**Fill in missing plugin and theme translations with AI.** Superdav AI Language Packs gives your site free, high-quality language packs for the plugins and themes you already use.
+**Fill in missing WordPress core, plugin, and theme translations with AI.** Superdav AI Language Packs gives your site free, high-quality language packs for WordPress core and the plugins and themes you already use.
 
 The plugin detects every non-English WordPress locale configured for your site, network, or user profiles. When an official translation is unavailable or incomplete, it requests a context-aware AI translation and installs it through WordPress's standard language-pack system. Official WordPress.org translations always take precedence.
 
@@ -27,13 +27,13 @@ The plugin and translation service are free to use. Translation generation is de
 * Only used when official translations are missing or incomplete
 * Replaced automatically when an official translation becomes available
 
-It translates installed plugins and themes; it does not replace WordPress core translations.
+It can fill eligible gaps in WordPress core, plugin, and theme translations. Core requests use the exact installed WordPress version and cover the native default, admin, network-admin, and continents/cities domains together. It does not replace non-empty official human translations or delete normal WordPress core language files.
 
 = How It Works =
 
-1. **Automatic Detection**: When WordPress checks for plugin updates, the plugin detects which plugins need translations
-2. **Smart Filtering**: Only requests AI translations for languages with no official translation or incomplete official translations
-3. **On-Demand Generation**: Translation jobs are triggered when a real site needs them
+1. **Automatic Detection**: Background scans detect configured non-English locales, installed plugins, and the exact installed WordPress core version
+2. **Smart Filtering**: Only requests AI translations for languages with no official translation, incomplete official translations, or server-verified missing core strings across native domains
+3. **On-Demand Generation**: Translation jobs are triggered asynchronously when a real site needs them
 4. **Local Caching**: Translations are cached locally for performance
 5. **Priority System**: Popular plugins get translated first
 
@@ -45,15 +45,16 @@ Use the optional links on the plugin status page to request coverage or sponsor 
 
 = External Service Usage =
 
-This plugin requires the translation service at https://translate.ultimatemultisite.com to check availability and request AI-generated plugin language packs. Requests are made automatically after activation and during scheduled translation checks.
+This plugin requires the translation service at https://translate.ultimatemultisite.com to check availability and request AI-generated core, plugin, and theme language packs. Requests are made automatically after activation and during scheduled translation checks.
 
 The service receives:
 
 * Plugin or theme text domain and installed version for extensions that need a language pack
+* The exact installed WordPress version for a typed core language-pack check
 * Requested locale codes, including locales discovered from site, network-site, and user-profile language settings
 * Plugin update-source classification when it is available
 
-The request body does not include the site URL, WordPress version, user IDs, names, email addresses, passwords, site content, posts, comments, or database records. The service receives the connection IP address as part of handling an HTTP request.
+The request body does not include the site URL, user IDs, names, email addresses, passwords, site content, posts, comments, or database records. The service receives the connection IP address as part of handling an HTTP request.
 
 The plugin stores its cache and downloaded language packs locally. The service provider's handling, retention, and deletion of request data are governed by its current Privacy Policy and Terms of Use:
 
@@ -74,6 +75,7 @@ The status page also contains optional links to the project's GitHub issue track
 * **On-Demand Generation**: Translation jobs triggered when needed
 * **WordPress Integration**: Uses standard WordPress translation update mechanisms
 * **All WordPress locales**: Detects every non-English locale configured by WordPress, including site, network-site, and user-profile locales
+* **Core gap filling**: Checks incomplete or unverifiable locales against the exact WordPress version, and requires all four native core PO catalogs before treating coverage as complete
 * **Multisite Support**: Network-activated with per-site locale detection
 * **Priority System**: Popular plugins get translated first
 * **Caching**: Both API responses and translation files are cached
@@ -110,15 +112,15 @@ The status page also contains optional links to the project's GitHub issue track
 
 = How does this differ from Google Translate or other translation plugins? =
 
-This plugin fills gaps in plugin and theme translations. Unlike page translation plugins, it downloads actual .mo/.po translation files that WordPress uses natively. It only activates when official translations from wordpress.org are missing or incomplete.
+This plugin fills gaps in WordPress core, plugin, and theme translations. Unlike page translation plugins, it downloads actual .mo/.po translation files that WordPress uses natively. It only activates when official translations from wordpress.org are missing or incomplete.
 
 = Is my data safe? =
 
-The plugin sends requested locale codes and limited installed-plugin metadata (text domain, version, and update source when available) to the translation service. It does not include the site URL, WordPress version, user IDs, names, email addresses, passwords, site content, posts, comments, or database records in its request body. The service receives the connection IP address as part of handling an HTTP request. Read the linked Privacy Policy and Terms of Use before activating the plugin.
+The plugin sends requested locale codes, limited installed-plugin metadata (text domain, version, and update source when available), and the exact WordPress version for core gap checks to the translation service. It does not include the site URL, user IDs, names, email addresses, passwords, site content, posts, comments, or database records in its request body. The service receives the connection IP address as part of handling an HTTP request. Read the linked Privacy Policy and Terms of Use before activating the plugin.
 
 = What languages are supported? =
 
-Every non-English locale that WordPress can be configured to use, including the 100+ language and regional variants available through WordPress. The plugin does not use a fixed language allowlist: it discovers configured site, network-site, and user-profile locales and requests a language pack for each one.
+Every non-English locale that WordPress can be configured to use, including the 100+ language and regional variants available through WordPress. The plugin does not use a fixed language allowlist: it discovers configured site, network-site, and user-profile locales and requests language packs where coverage is incomplete or cannot be verified.
 
 = Can I use this with existing translation plugins like Polylang or WPML? =
 
@@ -142,6 +144,10 @@ The service uses advanced language models to create natural, context-aware trans
 2. The dashboard explains how AI language packs are requested, installed, and superseded by official WordPress.org translations.
 
 == Changelog ==
+
+= Unreleased =
+- New: Check and install typed, exact-version WordPress core AI gap-fill language packs through the native language-pack updater.
+- Improved: Status and privacy information now distinguish WordPress core activity from plugin coverage.
 
 = 1.0.4 - 2026-08-25 =
 - Improved: Release metadata formatting is now consistent across distribution files.
@@ -189,7 +195,7 @@ Initial release. No upgrade necessary.
 
 == Privacy Policy ==
 
-This plugin communicates with translate.ultimatemultisite.com to check language-pack availability and request translations. It sends plugin text domains, plugin versions, plugin update-source classification when available, and requested locale codes. The request body does not include the site URL, WordPress version, user IDs, names, email addresses, passwords, site content, posts, comments, or database records.
+This plugin communicates with translate.ultimatemultisite.com to check language-pack availability and request translations. It sends plugin text domains, plugin versions, plugin update-source classification when available, requested locale codes, and the exact WordPress version for core gap checks. The request body does not include the site URL, user IDs, names, email addresses, passwords, site content, posts, comments, or database records.
 
 The service receives the connection IP address as part of handling an HTTP request. The plugin stores its own cache and downloaded language packs locally; the service provider's processing and retention practices are described in its Privacy Policy: https://ultimatemultisite.com/privacy
 
