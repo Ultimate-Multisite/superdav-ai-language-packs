@@ -409,7 +409,7 @@ class Translation_Manager {
                 continue;
             }
 
-            if (in_array($entry['status'] ?? '', ['requested', 'pending', 'processing', 'retrying'], true)) {
+            if (in_array($entry['status'] ?? '', ['requested', 'pending', 'processing', 'retrying', 'error'], true)) {
                 $this->record_pending($state, 'core');
                 continue;
             }
@@ -681,7 +681,10 @@ class Translation_Manager {
             return $result;
         }
 
-        $wanted_slugs   = is_object($args) && !empty($args->slugs) ? (array) $args->slugs : null;
+        $slugs = is_object($args)
+            ? ($args->slugs ?? null)
+            : (is_array($args) ? ($args['slugs'] ?? null) : null);
+        $wanted_slugs   = !empty($slugs) ? (array) $slugs : null;
         $wanted_version = $this->get_translation_api_argument($args, 'version');
 
         if ('core' === $type && '' === $wanted_version) {

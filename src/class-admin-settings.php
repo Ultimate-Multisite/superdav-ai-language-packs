@@ -678,7 +678,7 @@ class Admin_Settings {
 				'type'       => $type,
 				'textdomain' => $textdomain,
 				'locale'     => $locale,
-				'strings'    => $this->count_mo_strings( $file ),
+				'strings'    => 'core' === $type ? $this->count_core_mo_strings( $locale ) : $this->count_mo_strings( $file ),
 				'version'    => $version,
 			];
 		}
@@ -748,9 +748,9 @@ class Admin_Settings {
 	 */
 	private function find_translation_file( string $type, string $textdomain, string $locale, string $slug = '' ): ?string {
 		if ( 'core' === $type ) {
-			$core_file = WP_LANG_DIR . '/' . $locale . '.mo';
+			$core_files = $this->get_core_translation_files( $locale );
 
-			return is_readable( $core_file ) ? $core_file : null;
+			return $core_files[0] ?? null;
 		}
 
 		$languages_dir = WP_LANG_DIR . '/plugins';
@@ -771,6 +771,40 @@ class Admin_Settings {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Get readable core catalog files for a locale.
+	 *
+	 * @since 1.0.5
+	 * @param string $locale Locale code.
+	 * @return array<int, string> Absolute .mo paths.
+	 */
+	private function get_core_translation_files( string $locale ): array {
+		$files = [
+			WP_LANG_DIR . '/' . $locale . '.mo',
+			WP_LANG_DIR . '/admin-' . $locale . '.mo',
+			WP_LANG_DIR . '/admin-network-' . $locale . '.mo',
+			WP_LANG_DIR . '/continents-cities-' . $locale . '.mo',
+		];
+
+		return array_values( array_filter( $files, 'is_readable' ) );
+	}
+
+	/**
+	 * Count translated strings across every installed core catalog for a locale.
+	 *
+	 * @since 1.0.5
+	 * @param string $locale Locale code.
+	 * @return int Number of translated strings.
+	 */
+	private function count_core_mo_strings( string $locale ): int {
+		$count = 0;
+		foreach ( $this->get_core_translation_files( $locale ) as $file ) {
+			$count += $this->count_mo_strings( $file );
+		}
+
+		return $count;
 	}
 
 	/**
