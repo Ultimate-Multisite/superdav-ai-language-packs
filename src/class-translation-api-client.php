@@ -61,26 +61,42 @@ class Translation_API_Client {
     }
 
     /**
-     * Batch check + auto-queue translations for many plugins in one call.
+     * Batch check + auto-queue translations for plugins and optional core.
      *
      * Note: auto_approve defaults to false - all requests require server-side
      * approval before processing begins. Set auto_approve: true to bypass.
      *
      * @since 1.2.0
-     * @param array $plugins Array of ['textdomain' => string, 'version' => string].
-     * @param array $locales Locales to query for every plugin.
+     * @param array      $plugins Array of ['textdomain' => string, 'version' => string].
+     * @param array      $locales Locales to query for every target.
+     * @param array|null $core    Optional ['version' => exact WordPress version].
      * @return array|\WP_Error {
      *     'results' => textdomain-keyed map of locale-keyed translation entries,
      *     'requested'  => list of [textdomain, locale] pairs waiting for approval,
      *     'queue_length' => server pending queue length,
      * }
      */
-    public function batch_check_translations(array $plugins, array $locales) {
-        if (empty($plugins) || empty($locales)) {
+    public function batch_check_translations(array $plugins, array $locales, ?array $core = null) {
+        $core_version = is_array($core) && isset($core['version'])
+            ? trim((string) $core['version'])
+            : '';
+
+        if ((empty($plugins) && '' === $core_version) || empty($locales)) {
             return ['results' => [], 'requested' => [], 'queue_length' => 0];
         }
 
         $endpoint = $this->api_base . '/batch-check-translations';
+
+        $request_body = [
+            'plugins'      => array_values($plugins),
+            'locales'      => array_values($locales),
+            'auto_approve' => false, // Default: require approval.
+        ];
+        if ('' !== $core_version) {
+            // The server owns the canonical `wordpress` core textdomain. Clients
+            // send only the exact installed WordPress version in this typed slot.
+            $request_body['core'] = ['version' => $core_version];
+        }
 
         $response = wp_remote_post(
             $endpoint,
@@ -90,11 +106,7 @@ class Translation_API_Client {
                     'Content-Type' => 'application/json',
                     'Accept'       => 'application/json',
                 ],
-                'body'      => wp_json_encode([
-                    'plugins'    => array_values($plugins),
-                    'locales'    => array_values($locales),
-                    'auto_approve' => false,  // Default: require approval
-                ]),
+                'body'      => wp_json_encode($request_body),
             ]
         );
 

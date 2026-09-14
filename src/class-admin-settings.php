@@ -192,7 +192,7 @@ class Admin_Settings {
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 
 			<p class="description sd-ai-lang-packs-description">
-				<?php esc_html_e( 'Your plugins are translated automatically by AI whenever official translations are missing or incomplete. There is nothing to configure on this page — use it to review service health, background activity, detected locales, and installed AI language packs.', 'superdav-ai-language-packs' ); ?>
+				<?php esc_html_e( 'WordPress core and your plugins receive AI gap-fills when official translations are missing or incomplete. There is nothing to configure on this page — use it to review service health, background activity, detected locales, and installed AI language packs.', 'superdav-ai-language-packs' ); ?>
 			</p>
 
 			<div class="card">
@@ -216,7 +216,7 @@ class Admin_Settings {
 				<?php if ( 'running' === $refresh_status['status'] ) : ?>
 					<p class="sd-ai-lang-packs-status-line">
 						<span class="dashicons dashicons-update" aria-hidden="true"></span>
-						<?php esc_html_e( 'A background translation scan is currently processing installed plugins.', 'superdav-ai-language-packs' ); ?>
+						<?php esc_html_e( 'A background translation scan is currently processing installed translation targets.', 'superdav-ai-language-packs' ); ?>
 					</p>
 					<div class="sd-ai-lang-packs-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?php echo esc_attr( (string) $refresh_status['progress'] ); ?>">
 						<div class="sd-ai-lang-packs-progress-bar" style="width: <?php echo esc_attr( (string) $refresh_status['progress'] ); ?>%;"></div>
@@ -224,8 +224,8 @@ class Admin_Settings {
 					<p class="sd-ai-lang-packs-muted">
 						<?php
 						printf(
-							/* translators: 1: Processed plugin count, 2: Total plugin count. */
-							esc_html__( '%1$s of %2$s plugins processed in the current scan.', 'superdav-ai-language-packs' ),
+							/* translators: 1: Processed target count, 2: Total target count. */
+							esc_html__( '%1$s of %2$s translation targets processed in the current scan.', 'superdav-ai-language-packs' ),
 							esc_html( number_format_i18n( (int) $refresh_status['processed'] ) ),
 							esc_html( number_format_i18n( (int) $refresh_status['total'] ) )
 						);
@@ -259,6 +259,10 @@ class Admin_Settings {
 						<dd><?php echo esc_html( number_format_i18n( (int) $stats['plugins_checked'] ) ); ?></dd>
 					</div>
 					<div>
+						<dt><?php esc_html_e( 'Core locales checked last run', 'superdav-ai-language-packs' ); ?></dt>
+						<dd><?php echo esc_html( number_format_i18n( (int) $stats['core_checked'] ) ); ?></dd>
+					</div>
+					<div>
 						<dt><?php esc_html_e( 'Next scheduled scan', 'superdav-ai-language-packs' ); ?></dt>
 						<dd><?php echo esc_html( $this->format_scheduled_time( $refresh_status['next_scheduled'] ) ); ?></dd>
 					</div>
@@ -278,12 +282,20 @@ class Admin_Settings {
 						<div class="sd-ai-lang-packs-stat-label"><?php esc_html_e( 'plugins covered', 'superdav-ai-language-packs' ); ?></div>
 					</div>
 					<div class="sd-ai-lang-packs-stat">
+						<div class="sd-ai-lang-packs-stat-number"><?php echo esc_html( number_format_i18n( (int) $stats['core_count'] ) ); ?></div>
+						<div class="sd-ai-lang-packs-stat-label"><?php esc_html_e( 'core locale packs', 'superdav-ai-language-packs' ); ?></div>
+					</div>
+					<div class="sd-ai-lang-packs-stat">
 						<div class="sd-ai-lang-packs-stat-number"><?php echo esc_html( number_format_i18n( (int) $stats['languages_count'] ) ); ?></div>
 						<div class="sd-ai-lang-packs-stat-label"><?php esc_html_e( 'languages', 'superdav-ai-language-packs' ); ?></div>
 					</div>
 					<div class="sd-ai-lang-packs-stat">
-						<div class="sd-ai-lang-packs-stat-number"><?php echo esc_html( number_format_i18n( $pending ) ); ?></div>
-						<div class="sd-ai-lang-packs-stat-label"><?php esc_html_e( 'queued', 'superdav-ai-language-packs' ); ?></div>
+						<div class="sd-ai-lang-packs-stat-number"><?php echo esc_html( number_format_i18n( (int) $stats['plugin_pending_count'] ) ); ?></div>
+						<div class="sd-ai-lang-packs-stat-label"><?php esc_html_e( 'plugin translations queued', 'superdav-ai-language-packs' ); ?></div>
+					</div>
+					<div class="sd-ai-lang-packs-stat">
+						<div class="sd-ai-lang-packs-stat-number"><?php echo esc_html( number_format_i18n( (int) $stats['core_pending_count'] ) ); ?></div>
+						<div class="sd-ai-lang-packs-stat-label"><?php esc_html_e( 'core translations queued', 'superdav-ai-language-packs' ); ?></div>
 					</div>
 					<div class="sd-ai-lang-packs-stat">
 						<div class="sd-ai-lang-packs-stat-number"><?php echo esc_html( number_format_i18n( (int) $stats['available_count'] ) ); ?></div>
@@ -316,10 +328,10 @@ class Admin_Settings {
 
 				<?php if ( ! empty( $local ) ) : ?>
 					<table class="widefat striped sd-ai-lang-packs-table">
-						<caption class="screen-reader-text"><?php esc_html_e( 'Installed AI plugin language packs', 'superdav-ai-language-packs' ); ?></caption>
+						<caption class="screen-reader-text"><?php esc_html_e( 'Installed AI language packs', 'superdav-ai-language-packs' ); ?></caption>
 						<thead>
 							<tr>
-								<th scope="col"><?php esc_html_e( 'Plugin', 'superdav-ai-language-packs' ); ?></th>
+								<th scope="col"><?php esc_html_e( 'Target', 'superdav-ai-language-packs' ); ?></th>
 								<th scope="col"><?php esc_html_e( 'Language', 'superdav-ai-language-packs' ); ?></th>
 								<th scope="col" class="column-strings"><?php esc_html_e( 'Strings translated', 'superdav-ai-language-packs' ); ?></th>
 							</tr>
@@ -328,8 +340,19 @@ class Admin_Settings {
 							<?php foreach ( $local as $item ) : ?>
 								<tr>
 									<td>
-										<strong><?php echo esc_html( $plugin_names[ $item['textdomain'] ] ?? $item['textdomain'] ); ?></strong><br>
-										<span class="sd-ai-lang-packs-muted"><?php echo esc_html( $item['textdomain'] ); ?></span>
+										<?php if ( 'core' === ( $item['type'] ?? 'plugin' ) ) : ?>
+											<strong><?php esc_html_e( 'WordPress core', 'superdav-ai-language-packs' ); ?></strong><br>
+											<span class="sd-ai-lang-packs-muted">
+												<?php echo esc_html( $item['textdomain'] ); ?>
+												<?php if ( ! empty( $item['version'] ) ) : ?>
+													<?php echo esc_html_x( '·', 'separator between core textdomain and version', 'superdav-ai-language-packs' ); ?>
+													<?php echo esc_html( $item['version'] ); ?>
+												<?php endif; ?>
+											</span>
+										<?php else : ?>
+											<strong><?php echo esc_html( $plugin_names[ $item['textdomain'] ] ?? $item['textdomain'] ); ?></strong><br>
+											<span class="sd-ai-lang-packs-muted"><?php echo esc_html( $item['textdomain'] ); ?></span>
+										<?php endif; ?>
 									</td>
 									<td><?php echo esc_html( $this->format_locale_label( $item['locale'] ) ); ?></td>
 									<td class="column-strings"><?php echo esc_html( number_format_i18n( $item['strings'] ) ); ?></td>
@@ -339,7 +362,7 @@ class Admin_Settings {
 					</table>
 				<?php elseif ( 0 === $pending ) : ?>
 					<p class="sd-ai-lang-packs-muted">
-						<?php esc_html_e( 'No AI translations have been downloaded yet. They will appear here after WordPress detects missing translations and the background scan completes.', 'superdav-ai-language-packs' ); ?>
+						<?php esc_html_e( 'No AI translations have been downloaded yet. They will appear here after WordPress detects missing translation gaps and the background scan completes.', 'superdav-ai-language-packs' ); ?>
 					</p>
 				<?php endif; ?>
 			</div>
@@ -348,7 +371,7 @@ class Admin_Settings {
 				<h2><?php esc_html_e( 'Locale Coverage', 'superdav-ai-language-packs' ); ?></h2>
 				<p><?php esc_html_e( 'These non-English locales are currently detected from the site language, network site languages, and user profile language preferences.', 'superdav-ai-language-packs' ); ?></p>
 				<?php if ( empty( $monitored_locales ) ) : ?>
-					<p class="sd-ai-lang-packs-muted"><?php esc_html_e( 'Only English or site-default locales are currently detected, so no AI plugin language packs are needed.', 'superdav-ai-language-packs' ); ?></p>
+					<p class="sd-ai-lang-packs-muted"><?php esc_html_e( 'Only English or site-default locales are currently detected, so no AI language packs are needed.', 'superdav-ai-language-packs' ); ?></p>
 				<?php else : ?>
 					<ul class="sd-ai-lang-packs-locale-list">
 						<?php foreach ( $monitored_locales as $locale => $locale_data ) : ?>
@@ -387,8 +410,8 @@ class Admin_Settings {
 			<div class="card">
 				<h2><?php esc_html_e( 'How It Works', 'superdav-ai-language-packs' ); ?></h2>
 				<ol>
-					<li><?php esc_html_e( 'When WordPress checks for plugin updates, this plugin checks whether translations are needed.', 'superdav-ai-language-packs' ); ?></li>
-					<li><?php esc_html_e( 'For any plugin without complete official translations, AI-generated translations are requested automatically.', 'superdav-ai-language-packs' ); ?></li>
+					<li><?php esc_html_e( 'Background checks discover translation gaps for WordPress core and installed plugins.', 'superdav-ai-language-packs' ); ?></li>
+					<li><?php esc_html_e( 'For each target with missing official strings, AI-generated gap-fills are requested automatically.', 'superdav-ai-language-packs' ); ?></li>
 					<li><?php esc_html_e( 'Translations are generated using advanced language models and delivered as standard WordPress language packs.', 'superdav-ai-language-packs' ); ?></li>
 					<li><?php esc_html_e( 'Once downloaded, translations update automatically whenever a new plugin version is released.', 'superdav-ai-language-packs' ); ?></li>
 					<li><?php esc_html_e( 'If official translations from WordPress.org become available, they automatically take precedence.', 'superdav-ai-language-packs' ); ?></li>
@@ -400,10 +423,11 @@ class Admin_Settings {
 				<p><?php esc_html_e( 'This plugin uses the translation service to check language-pack availability and request translations. The service receives the following installation data:', 'superdav-ai-language-packs' ); ?></p>
 				<ul>
 					<li><?php esc_html_e( 'Plugin text domains and installed versions', 'superdav-ai-language-packs' ); ?></li>
+					<li><?php esc_html_e( 'The exact installed WordPress version when checking core translation gaps', 'superdav-ai-language-packs' ); ?></li>
 					<li><?php esc_html_e( 'Requested locale codes, including locales discovered from site, network-site, and user-profile language settings', 'superdav-ai-language-packs' ); ?></li>
 					<li><?php esc_html_e( 'Plugin update-source classification when it is available', 'superdav-ai-language-packs' ); ?></li>
 				</ul>
-				<p><?php esc_html_e( 'The request body does not include the site URL, WordPress version, user IDs, names, email addresses, passwords, site content, posts, comments, or database records. The service receives the connection IP address as part of handling an HTTP request.', 'superdav-ai-language-packs' ); ?></p>
+				<p><?php esc_html_e( 'The request body does not include the site URL, user IDs, names, email addresses, passwords, site content, posts, comments, or database records. The service receives the connection IP address as part of handling an HTTP request.', 'superdav-ai-language-packs' ); ?></p>
 				<p><?php esc_html_e( 'The plugin stores its cache and downloaded language packs locally. The service provider handles request data under its current terms and privacy policy.', 'superdav-ai-language-packs' ); ?></p>
 				<p class="sd-ai-lang-packs-muted">
 					<a href="<?php echo esc_url( 'https://ultimatemultisite.com/terms' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Terms of Use', 'superdav-ai-language-packs' ); ?></a>
@@ -420,26 +444,36 @@ class Admin_Settings {
 	 * Get translation statistics.
 	 *
 	 * @since 1.0.0
-	 * @param array<int, array{textdomain: string, locale: string, strings: int}> $details Local translation details.
+	 * @param array<int, array{type: string, textdomain: string, locale: string, strings: int, version: string}> $details Local translation details.
 	 * @return array Statistics array.
 	 */
 	private function get_translation_statistics( array $details ): array {
-		$plugins   = [];
-		$languages = [];
+		$plugins      = [];
+		$core_locales = [];
+		$languages    = [];
 
 		foreach ( $details as $detail ) {
-			$plugins[]   = $detail['textdomain'];
+			if ( 'core' === $detail['type'] ) {
+				$core_locales[] = $detail['version'] . '|' . $detail['locale'];
+			} else {
+				$plugins[] = $detail['textdomain'];
+			}
 			$languages[] = $detail['locale'];
 		}
 
 		$last_check_raw = get_site_option( 'sd_ai_lang_packs_last_check', null );
+		$pending_count  = (int) get_site_option( 'sd_ai_lang_packs_pending_count', 0 );
 
 		return [
 			'total_translations' => count( $details ),
 			'plugins_count'      => count( array_unique( $plugins ) ),
+			'core_count'         => count( array_unique( $core_locales ) ),
 			'languages_count'    => count( array_unique( $languages ) ),
 			'plugins_checked'    => (int) get_site_option( 'sd_ai_lang_packs_plugins_checked', 0 ),
-			'pending_count'      => (int) get_site_option( 'sd_ai_lang_packs_pending_count', 0 ),
+			'core_checked'       => (int) get_site_option( 'sd_ai_lang_packs_core_checked', 0 ),
+			'pending_count'      => $pending_count,
+			'plugin_pending_count' => (int) get_site_option( 'sd_ai_lang_packs_plugin_pending_count', $pending_count ),
+			'core_pending_count' => (int) get_site_option( 'sd_ai_lang_packs_core_pending_count', 0 ),
 			'available_count'    => (int) get_site_option( 'sd_ai_lang_packs_available_count', 0 ),
 			'last_check'         => $last_check_raw
 				? human_time_diff( (int) strtotime( (string) $last_check_raw ), time() ) . ' ' . __( 'ago', 'superdav-ai-language-packs' )
@@ -461,8 +495,11 @@ class Admin_Settings {
 		$total          = 0;
 
 		if ( is_array( $state ) && isset( $state['plugins'] ) && is_array( $state['plugins'] ) ) {
-			$total     = count( $state['plugins'] );
-			$processed = min( max( (int) ( $state['offset'] ?? 0 ), 0 ), $total );
+			$plugin_total = count( $state['plugins'] );
+			$core_total   = is_array( $state['core_locales'] ?? null ) ? count( $state['core_locales'] ) : 0;
+			$total        = $plugin_total + $core_total;
+			$processed    = min( max( (int) ( $state['offset'] ?? 0 ), 0 ), $plugin_total )
+				+ min( max( (int) ( $state['core_offset'] ?? 0 ), 0 ), $core_total );
 
 			if ( $total > $processed ) {
 				$status = 'running';
@@ -505,7 +542,7 @@ class Admin_Settings {
 	}
 
 	/**
-	 * Get non-English locales that can trigger AI plugin translations.
+	 * Get non-English locales that can trigger AI language-pack checks.
 	 *
 	 * Mirrors Translation_Manager locale discovery for status visibility while
 	 * showing only the locales that require language packs.
@@ -609,60 +646,62 @@ class Admin_Settings {
 	 * then locale so the table is stable across page loads.
 	 *
 	 * @since 1.0.0
-	 * @return array<int, array{textdomain: string, locale: string, strings: int}>
+	 * @return array<int, array{type: string, textdomain: string, locale: string, strings: int, version: string}>
 	 */
 	private function get_local_translation_details(): array {
-		$languages_dir = WP_LANG_DIR . '/plugins';
-		$details       = [];
-
-		if ( ! is_dir( $languages_dir ) ) {
-			return $details;
-		}
+		$plugin_languages_dir = WP_LANG_DIR . '/plugins';
+		$details              = [];
 
 		$seen = [];
 		foreach ( $this->get_installed_ai_translation_entries() as $entry ) {
+			$type       = (string) ( $entry['type'] ?? 'plugin' );
 			$textdomain = (string) ( $entry['textdomain'] ?? $entry['slug'] ?? '' );
 			$locale     = (string) ( $entry['language'] ?? '' );
+			$version    = (string) ( $entry['version'] ?? '' );
 
-			if ( '' === $textdomain || '' === $locale ) {
+			if ( ! in_array( $type, [ 'plugin', 'core' ], true ) || '' === $textdomain || '' === $locale ) {
 				continue;
 			}
 
-			$file = $this->find_translation_file( $textdomain, $locale, (string) ( $entry['slug'] ?? '' ) );
+			$file = $this->find_translation_file( $type, $textdomain, $locale, (string) ( $entry['slug'] ?? '' ) );
 			if ( null === $file ) {
 				continue;
 			}
 
-			$key = $textdomain . '|' . $locale;
+			$key = $type . '|' . $textdomain . '|' . $version . '|' . $locale;
 			if ( isset( $seen[ $key ] ) ) {
 				continue;
 			}
 			$seen[ $key ] = true;
 
 			$details[] = [
+				'type'       => $type,
 				'textdomain' => $textdomain,
 				'locale'     => $locale,
 				'strings'    => $this->count_mo_strings( $file ),
+				'version'    => $version,
 			];
 		}
 
 		// Back-compat only: show any old suffixed files from earlier builds.
-		$legacy_files = glob( $languages_dir . '/*-gratis-ai.mo' ) ?: [];
+		$legacy_files = is_dir( $plugin_languages_dir ) ? glob( $plugin_languages_dir . '/*-gratis-ai.mo' ) ?: [] : [];
 		foreach ( $legacy_files as $file ) {
 			if ( ! preg_match( '/^(.+)-([a-z]{2,3}(?:_[A-Z]{2,3})?)-gratis-ai\.mo$/', basename( $file ), $matches ) ) {
 				continue;
 			}
 
-			$key = $matches[1] . '|' . $matches[2];
+			$key = 'plugin|' . $matches[1] . '||' . $matches[2];
 			if ( isset( $seen[ $key ] ) ) {
 				continue;
 			}
 			$seen[ $key ] = true;
 
 			$details[] = [
+				'type'       => 'plugin',
 				'textdomain' => $matches[1],
 				'locale'     => $matches[2],
 				'strings'    => $this->count_mo_strings( $file ),
+				'version'    => '',
 			];
 		}
 
@@ -696,18 +735,24 @@ class Admin_Settings {
 	/**
 	 * Find the installed .mo file for an AI translation entry.
 	 *
-	 * Current packages are normal WordPress language packs, named
-	 * {textdomain}-{locale}.mo. The slug fallback handles older cached entries
-	 * that did not store textdomain separately, and the -gratis-ai candidate is
-	 * retained only for legacy files.
+	 * Plugin packages use {textdomain}-{locale}.mo under WP_LANG_DIR/plugins;
+	 * core packages use the native default-domain {locale}.mo under WP_LANG_DIR.
+	 * The slug fallback and -gratis-ai candidate are retained for legacy plugins.
 	 *
 	 * @since 1.0.0
-	 * @param string $textdomain Plugin textdomain.
+	 * @param string $type       Target type.
+	 * @param string $textdomain Target textdomain.
 	 * @param string $locale     Locale code.
 	 * @param string $slug       Plugin slug fallback.
 	 * @return string|null Absolute .mo path, or null if no file exists.
 	 */
-	private function find_translation_file( string $textdomain, string $locale, string $slug = '' ): ?string {
+	private function find_translation_file( string $type, string $textdomain, string $locale, string $slug = '' ): ?string {
+		if ( 'core' === $type ) {
+			$core_file = WP_LANG_DIR . '/' . $locale . '.mo';
+
+			return is_readable( $core_file ) ? $core_file : null;
+		}
+
 		$languages_dir = WP_LANG_DIR . '/plugins';
 		$candidates    = [
 			$languages_dir . '/' . $textdomain . '-' . $locale . '.mo',

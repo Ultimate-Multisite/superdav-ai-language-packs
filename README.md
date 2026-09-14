@@ -2,7 +2,7 @@
 
 [![Download Plugin Now](https://img.shields.io/github/v/release/Ultimate-Multisite/ultimate-ai-plugin-translations?style=for-the-badge&label=Download+Plugin+Now&color=0073aa)](https://github.com/Ultimate-Multisite/ultimate-ai-plugin-translations/releases/latest/download/superdav-ai-plugin-translations.zip) &nbsp; Upload the zip to WordPress like any other plugin
 
-**Fill in missing plugin and theme translations with AI.**
+**Fill in missing WordPress core, plugin, and theme translations with AI.**
 
 Superdav AI Language Packs provides free, high-quality, context-aware language packs when official WordPress.org translations are missing or incomplete. Official translations always take precedence.
 
@@ -13,6 +13,7 @@ The official WordPress translation platform relies on human volunteers and only 
 - Premium plugins and themes not hosted on WordPress.org
 - Plugins and themes with incomplete translations
 - Extensions that have not yet been translated by volunteers
+- WordPress core locales with remaining untranslated strings
 
 The plugin and translation service are free to use. Advanced language models generate natural, context-aware translations rather than simple word-for-word substitutions. Language packs are:
 
@@ -39,13 +40,31 @@ Read [SPONSORSHIP.md](SPONSORSHIP.md) before funding or requesting work. Request
 
 ## How It Works
 
-1. **Automatic Detection**: When WordPress checks for plugin updates, the plugin detects which plugins need translations
+1. **Automatic Detection**: Background scans detect configured non-English locales, installed plugins, and the exact installed WordPress core version
 2. **Smart Filtering**: Only requests AI translations for:
-   - Languages with no official translation
-   - Incomplete official translations (when enabled)
-3. **On-Demand Generation**: Translation jobs are triggered when a real site needs them
+    - Languages with no official translation
+    - Incomplete official translations (when enabled)
+    - Core strings the server verifies are missing across native core domains
+3. **On-Demand Generation**: Translation jobs are triggered asynchronously when a real site needs them
 4. **Local Caching**: Translations are cached locally for performance
 5. **Priority System**: Popular plugins get translated first
+
+### WordPress Core Language Packs
+
+Core is a first-class, versioned target rather than a plugin alias. For each
+configured non-English locale whose native core catalogs are incomplete or
+cannot be verified, the client sends the exact installed WordPress version
+through the typed core batch contract. The server evaluates the `default`,
+`admin`, `admin-network`, and `continents-cities` domains together, retains
+official human translations, and asks AI only for eligible missing strings. A
+returned package is installed through WordPress's native core language-pack
+updater.
+
+The client suppresses a core request only when all four expected PO catalogs
+prove complete coverage; it never treats a single local PO file as sufficient.
+It never deletes normal core language files and safely retries core checks when
+connected to an older or unavailable server. Plugin requests and existing cached
+packages continue independently.
 
 ## Installation
 
@@ -79,7 +98,7 @@ composer require ultimate-multisite/superdav-ai-plugin-translations
 
 Navigate to **Settings > AI Translations** (single site) or **Network Admin > Settings > AI Translations** (multisite).
 
-The page is read-only. It reports service health, background scan activity, detected non-English locales, queued translation jobs, and installed AI language packs. It does not include a manual refresh button or write plugin options.
+The page is read-only. It reports service health, background scan activity, detected non-English locales, queued translation jobs, core coverage, plugin coverage, and installed AI language packs. It does not include a manual refresh button or write plugin options.
 
 ### Code Configuration
 
@@ -137,7 +156,7 @@ wp superdav-ai-plugin-translations status-plugin woocommerce de_DE
 
 ### Hooks Used
 
-- `translations_api`: Filter translation API results
+- `translations_api`: Filter cached plugin and exact-version core language-pack results
 - `sd_ai_lang_packs_refresh_cache`: Refresh and install AI translation packages asynchronously
 - `http_request_host_is_external`: Allow downloads from the configured translation server host
 
@@ -151,8 +170,8 @@ Translations are prioritized based on plugin popularity:
 
 ## Privacy
 
-- The translation service receives plugin text domains, installed versions, update-source classification when available, and requested locale codes.
-- The request body does not include the site URL, WordPress version, user IDs, names, email addresses, passwords, site content, posts, comments, or database records. The service receives the connection IP address as part of handling an HTTP request.
+- The translation service receives plugin text domains, installed versions, update-source classification when available, requested locale codes, and the exact WordPress version for core gap checks.
+- The request body does not include the site URL, user IDs, names, email addresses, passwords, site content, posts, comments, or database records. The service receives the connection IP address as part of handling an HTTP request.
 - The plugin stores its cache and downloaded language packs locally. The service provider's handling, retention, and deletion of request data are governed by its [Privacy Policy](https://ultimatemultisite.com/privacy) and [Terms of Use](https://ultimatemultisite.com/terms).
 - Deactivate the plugin to stop its external requests.
 - The optional sponsorship and coverage-request links open GitHub only when an administrator clicks them. The plugin does not append the site URL, installed-product list, locale list, or other site data to those links.

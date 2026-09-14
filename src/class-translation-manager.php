@@ -25,6 +25,35 @@ use WP_Upgrader;
 class Translation_Manager {
 
     /**
+     * Canonical WordPress core textdomain used by the typed server contract.
+     *
+     * @since 1.0.5
+     * @var string
+     */
+    private const CORE_TEXTDOMAIN = 'wordpress';
+
+    /**
+     * Maximum locale count accepted by the server's core batch contract.
+     *
+     * @since 1.0.5
+     * @var int
+     */
+    private const CORE_BATCH_LOCALE_LIMIT = 20;
+
+    /**
+     * Native core domains that together establish complete WordPress coverage.
+     *
+     * @since 1.0.5
+     * @var array<string, string>
+     */
+    private const CORE_DOMAIN_FILE_PREFIXES = [
+        'default'           => '',
+        'admin'             => 'admin-',
+        'admin-network'     => 'admin-network-',
+        'continents-cities' => 'continents-cities-',
+    ];
+
+    /**
      * API client instance.
      *
      * @since 1.0.0
@@ -128,7 +157,9 @@ class Translation_Manager {
         if (!function_exists('get_plugins')) {
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
-        $plugins = array_keys(get_plugins());
+        $plugins      = array_keys(get_plugins());
+        $core_version = (string) get_bloginfo('version');
+        $core_locales = $this->get_core_translation_locales();
         sort($plugins);
 
         // Resume from prior chunk state, or start fresh.
@@ -137,14 +168,37 @@ class Translation_Manager {
             && isset($state['plugins'], $state['offset'])
             && $state['plugins'] === $plugins;
 
+        if ($is_resume && isset($state['core_version']) && $state['core_version'] !== $core_version) {
+            // A WordPress update changes the exact core language-pack identity.
+            $is_resume = false;
+        }
+        if ($is_resume && isset($state['core_locales']) && $state['core_locales'] !== $core_locales) {
+            // Restart safely when the requested locale set changed mid-refresh.
+            $is_resume = false;
+        }
+
         if (!$is_resume) {
             $state = [
-                'plugins'    => $plugins,
-                'offset'     => 0,
-                'entries'    => [],
-                'pending'    => 0,
-                'started_at' => current_time('mysql'),
+                'plugins'        => $plugins,
+                'offset'         => 0,
+                'core_version'   => $core_version,
+                'core_locales'   => $core_locales,
+                'core_offset'    => 0,
+                'entries'        => [],
+                'pending'        => 0,
+                'plugin_pending' => 0,
+                'core_pending'   => 0,
+                'started_at'     => current_time('mysql'),
             ];
+        } else {
+            // Old plugin-only refresh states remain resumable after this upgrade.
+            $state['core_version']   = $state['core_version'] ?? $core_version;
+            $state['core_locales']   = $state['core_locales'] ?? $core_locales;
+            $state['core_offset']    = (int) ($state['core_offset'] ?? 0);
+            $state['entries']        = is_array($state['entries'] ?? null) ? $state['entries'] : [];
+            $state['pending']        = (int) ($state['pending'] ?? 0);
+            $state['plugin_pending'] = (int) ($state['plugin_pending'] ?? $state['pending']);
+            $state['core_pending']   = (int) ($state['core_pending'] ?? 0);
         }
 
         /**
@@ -160,23 +214,31 @@ class Translation_Manager {
         $chunk_size = (int) apply_filters('sd_ai_lang_packs_refresh_chunk_size', 25);
         $chunk_size = max(1, min(100, $chunk_size));
 
-        $slice = array_slice($plugins, $state['offset'], $chunk_size);
-        if (empty($slice)) {
-            $this->finalize_refresh($state);
+        if ($state['offset'] < count($plugins)) {
+            $slice = array_slice($plugins, $state['offset'], $chunk_size);
+            $this->process_refresh_chunk($slice, $state);
+
+            $state['offset'] += count($slice);
+            update_site_option('sd_ai_lang_packs_refresh_state', $state);
+            wp_schedule_single_event(time() + 1, 'sd_ai_lang_packs_refresh_cache');
             return;
         }
 
-        $this->process_refresh_chunk($slice, $state);
+        if ($state['core_offset'] < count($state['core_locales'])) {
+            $slice = array_slice(
+                $state['core_locales'],
+                $state['core_offset'],
+                self::CORE_BATCH_LOCALE_LIMIT
+            );
+            $this->process_core_refresh_chunk($slice, (string) $state['core_version'], $state);
 
-        $state['offset'] += count($slice);
-        if ($state['offset'] >= count($plugins)) {
-            $this->finalize_refresh($state);
+            $state['core_offset'] += count($slice);
+            update_site_option('sd_ai_lang_packs_refresh_state', $state);
+            wp_schedule_single_event(time() + 1, 'sd_ai_lang_packs_refresh_cache');
             return;
         }
 
-        // More work to do — persist state and reschedule the next chunk.
-        update_site_option('sd_ai_lang_packs_refresh_state', $state);
-        wp_schedule_single_event(time() + 1, 'sd_ai_lang_packs_refresh_cache');
+        $this->finalize_refresh($state);
     }
 
     /**
@@ -246,14 +308,18 @@ class Translation_Manager {
         if (is_wp_error($response)) {
             // Soft-fail: count everything as pending so the user sees activity.
             foreach ($needed_map as $td => $locales) {
-                $state['pending'] += count($locales);
+                $this->record_pending($state, 'plugin', count($locales));
             }
             return;
         }
 
         $results = $response['results'] ?? [];
         $queued  = $response['queued'] ?? ($response['requested'] ?? []);
-        $state['pending'] += is_countable($queued) ? count($queued) : (int) ($response['queue_length'] ?? 0);
+        $this->record_pending(
+            $state,
+            'plugin',
+            is_countable($queued) ? count($queued) : (int) ($response['queue_length'] ?? 0)
+        );
 
         foreach ($results as $result_key => $by_locale) {
             // Current servers namespace result keys by target type (for example,
@@ -275,7 +341,7 @@ class Translation_Manager {
                     continue;
                 }
                 if (in_array($entry['status'] ?? '', ['requested', 'pending', 'processing'], true)) {
-                    $state['pending']++;
+                    $this->record_pending($state, 'plugin');
                     continue;
                 }
                 if (empty($entry['package_url'])) {
@@ -297,6 +363,95 @@ class Translation_Manager {
     }
 
     /**
+     * Process one bounded core locale chunk through the typed core contract.
+     *
+     * Core coverage spans several WordPress domains. The server imports and
+     * compares those domains together, so this client intentionally does not
+     * treat one local PO file or a single update entry as proof of completeness.
+     *
+     * @since 1.0.5
+     * @param array<int, string> $locales Exact non-English locales to check.
+     * @param string             $version Exact installed WordPress version.
+     * @param array              $state   Refresh state (entries / pending mutated).
+     * @return void
+     */
+    private function process_core_refresh_chunk(array $locales, string $version, array &$state): void {
+        if (empty($locales) || '' === $version) {
+            return;
+        }
+
+        $response = $this->api_client->batch_check_translations(
+            [],
+            $locales,
+            ['version' => $version]
+        );
+
+        if (is_wp_error($response)) {
+            // An unavailable or old server must not block plugin processing.
+            $this->record_pending($state, 'core', count($locales));
+            return;
+        }
+
+        $results      = $response['results'] ?? [];
+        $core_results = is_array($results) ? ($results['core:' . self::CORE_TEXTDOMAIN] ?? null) : null;
+
+        if (!is_array($core_results)) {
+            // Old servers ignore the optional core object. Keep the prior cache
+            // intact and retry later rather than treating this as a plugin result.
+            $this->record_pending($state, 'core', count($locales));
+            return;
+        }
+
+        foreach ($locales as $locale) {
+            $entry = $core_results[$locale] ?? null;
+            if (!is_array($entry)) {
+                $this->record_pending($state, 'core');
+                continue;
+            }
+
+            if (in_array($entry['status'] ?? '', ['requested', 'pending', 'processing', 'retrying'], true)) {
+                $this->record_pending($state, 'core');
+                continue;
+            }
+
+            if (empty($entry['package_url'])) {
+                continue;
+            }
+
+            $state['entries'][] = [
+                'type'       => 'core',
+                'slug'       => self::CORE_TEXTDOMAIN,
+                'textdomain' => self::CORE_TEXTDOMAIN,
+                'language'   => $locale,
+                'version'    => $version,
+                'updated'    => $entry['updated'] ?? current_time('mysql'),
+                'package'    => $entry['package_url'],
+                'autoupdate' => true,
+                'source'     => 'sd-ai-lang-pack',
+            ];
+        }
+    }
+
+    /**
+     * Record pending work in the total and type-specific refresh counters.
+     *
+     * @since 1.0.5
+     * @param array  $state Refresh state (pending counters mutated).
+     * @param string $type  Target type.
+     * @param int    $count Number of pending targets.
+     * @return void
+     */
+    private function record_pending(array &$state, string $type, int $count = 1): void {
+        if ($count <= 0) {
+            return;
+        }
+
+        $state['pending'] = (int) ($state['pending'] ?? 0) + $count;
+        $key              = 'core' === $type ? 'core_pending' : 'plugin_pending';
+        $state[$key]      = (int) ($state[$key] ?? 0) + $count;
+    }
+
+    /**
      * Persist final cache + stats and clear the chunk state.
      *
      * The translations cache is only written when the refresh is fully
@@ -311,9 +466,12 @@ class Translation_Manager {
      * @return void
      */
     private function finalize_refresh(array $state): void {
-        $entries = $state['entries'] ?? [];
-        $pending = (int) ($state['pending'] ?? 0);
-        $checked = count($state['plugins'] ?? []);
+        $entries        = $state['entries'] ?? [];
+        $pending        = (int) ($state['pending'] ?? 0);
+        $checked        = count($state['plugins'] ?? []);
+        $core_checked   = min((int) ($state['core_offset'] ?? 0), count($state['core_locales'] ?? []));
+        $plugin_pending = (int) ($state['plugin_pending'] ?? $pending);
+        $core_pending   = (int) ($state['core_pending'] ?? 0);
 
         $installed_entries = get_site_option('sd_ai_lang_packs_installed_translations', []);
         $installed_entries = is_array($installed_entries) ? $installed_entries : [];
@@ -338,12 +496,17 @@ class Translation_Manager {
              * @param int $seconds Default 1 hour.
              */
             $cache_duration = (int) apply_filters('sd_ai_lang_packs_cache_duration', HOUR_IN_SECONDS);
-            set_site_transient('sd_ai_lang_packs_translations_cache', $entries, $cache_duration);
+            // The ledger retains packages returned by prior successful scans.
+            // Reusing it prevents a no-op core check from dropping plugin updates.
+            set_site_transient('sd_ai_lang_packs_translations_cache', $installed_entries, $cache_duration);
         }
 
         update_site_option('sd_ai_lang_packs_last_check', current_time('mysql'));
         update_site_option('sd_ai_lang_packs_plugins_checked', $checked);
+        update_site_option('sd_ai_lang_packs_core_checked', $core_checked);
         update_site_option('sd_ai_lang_packs_pending_count', $pending);
+        update_site_option('sd_ai_lang_packs_plugin_pending_count', $plugin_pending);
+        update_site_option('sd_ai_lang_packs_core_pending_count', $core_pending);
         update_site_option('sd_ai_lang_packs_available_count', count($installed_entries));
         set_site_transient('sd_ai_lang_packs_pending_count', $pending, DAY_IN_SECONDS);
 
@@ -370,16 +533,44 @@ class Translation_Manager {
                 continue;
             }
 
-            $textdomain = (string) ($entry['textdomain'] ?? $entry['slug'] ?? '');
-            $language   = (string) ($entry['language'] ?? '');
-            if ('' === $textdomain || '' === $language) {
+            $identity = $this->get_translation_entry_identity($entry);
+            if ('' === $identity) {
                 continue;
             }
 
-            $merged[$textdomain . '|' . $language] = $entry;
+            $merged[$identity] = $entry;
         }
 
         return array_values($merged);
+    }
+
+    /**
+     * Build a stable translation-ledger identity without colliding core and
+     * plugin entries. Legacy entries keep their existing plugin identity.
+     *
+     * @since 1.0.5
+     * @param array<string, mixed> $entry Translation ledger entry.
+     * @return string Stable identity, or an empty string for invalid entries.
+     */
+    private function get_translation_entry_identity(array $entry): string {
+        $type       = (string) ($entry['type'] ?? 'plugin');
+        $textdomain = (string) ($entry['textdomain'] ?? $entry['slug'] ?? '');
+        $language   = (string) ($entry['language'] ?? '');
+
+        if ('' === $textdomain || '' === $language) {
+            return '';
+        }
+
+        if ('core' === $type) {
+            $version = (string) ($entry['version'] ?? '');
+            if (self::CORE_TEXTDOMAIN !== $textdomain || '' === $version) {
+                return '';
+            }
+
+            return implode('|', ['core', $textdomain, $version, $language]);
+        }
+
+        return implode('|', ['plugin', $textdomain, $language]);
     }
 
     /**
@@ -408,13 +599,21 @@ class Translation_Manager {
                 continue;
             }
 
+            $type = (string) ($entry['type'] ?? 'plugin');
+            if (!in_array($type, ['plugin', 'core'], true)) {
+                continue;
+            }
+            if ('core' === $type && self::CORE_TEXTDOMAIN !== (string) $entry['slug']) {
+                continue;
+            }
+
             $package = (string) $entry['package'];
             if (!$this->is_trusted_package_url($package)) {
                 continue;
             }
 
             $language_update = (object) [
-                'type'       => 'plugin',
+                'type'       => $type,
                 'slug'       => (string) $entry['slug'],
                 'language'   => (string) $entry['language'],
                 'version'    => (string) ($entry['version'] ?? ''),
@@ -454,12 +653,12 @@ class Translation_Manager {
      *
      * @since 1.0.0
      * @param array|bool $result The API result.
-     * @param string     $type   The type of translations being requested ('plugins' or 'themes').
-     * @param object     $args   Arguments used to query for plugin translations.
+     * @param string     $type   The type of translations being requested ('plugins' or 'core').
+     * @param object|array $args Arguments used to query for translations.
      * @return array|bool Modified result.
      */
     public function filter_translations_api($result, string $type, $args) {
-        if ($type !== 'plugins') {
+        if (!in_array($type, ['plugins', 'core'], true)) {
             return $result;
         }
 
@@ -482,12 +681,35 @@ class Translation_Manager {
             return $result;
         }
 
-        $wanted_slugs = !empty($args->slugs) ? (array) $args->slugs : null;
+        $wanted_slugs   = is_object($args) && !empty($args->slugs) ? (array) $args->slugs : null;
+        $wanted_version = $this->get_translation_api_argument($args, 'version');
+
+        if ('core' === $type && '' === $wanted_version) {
+            // A core package without an exact version could cross an upgrade.
+            return $result;
+        }
 
         foreach ($cached as $entry) {
-            if ($wanted_slugs !== null && !in_array($entry['slug'] ?? '', $wanted_slugs, true)) {
+            if (!is_array($entry)) {
                 continue;
             }
+
+            $entry_type = (string) ($entry['type'] ?? 'plugin');
+            if ('plugins' === $type) {
+                if ('plugin' !== $entry_type) {
+                    continue;
+                }
+                if ($wanted_slugs !== null && !in_array($entry['slug'] ?? '', $wanted_slugs, true)) {
+                    continue;
+                }
+            } elseif (
+                'core' !== $entry_type
+                || self::CORE_TEXTDOMAIN !== (string) ($entry['slug'] ?? '')
+                || $wanted_version !== (string) ($entry['version'] ?? '')
+            ) {
+                continue;
+            }
+
             if (!isset($result['translations'])) {
                 $result['translations'] = [];
             }
@@ -495,6 +717,25 @@ class Translation_Manager {
         }
 
         return $result;
+    }
+
+    /**
+     * Read one translations API argument from WordPress's object or array shape.
+     *
+     * @since 1.0.5
+     * @param mixed  $args API arguments.
+     * @param string $key  Argument name.
+     * @return string Argument value, or an empty string when omitted.
+     */
+    private function get_translation_api_argument($args, string $key): string {
+        if (is_object($args) && isset($args->{$key})) {
+            return (string) $args->{$key};
+        }
+        if (is_array($args) && isset($args[$key])) {
+            return (string) $args[$key];
+        }
+
+        return '';
     }
 
     /**
@@ -683,6 +924,111 @@ class Translation_Manager {
     }
 
     /**
+     * Get deterministic non-English locales for the versioned core target.
+     *
+     * The server evaluates all core domains together, so this method only
+     * identifies requested locales. It deliberately does not infer complete
+     * core coverage from the installed default, admin, or network-admin file.
+     *
+     * @since 1.0.5
+     * @return array<int, string> Locale codes.
+     */
+    private function get_core_translation_locales(): array {
+        $locales = [];
+
+        foreach ($this->get_site_locales() as $locale) {
+            if (
+                !is_string($locale)
+                || !$this->locale_discovery->is_translation_locale($locale)
+                || $this->is_core_locale_complete($locale)
+            ) {
+                continue;
+            }
+            $locales[] = $locale;
+        }
+
+        $locales = array_values(array_unique($locales));
+        sort($locales);
+
+        return $locales;
+    }
+
+    /**
+     * Check whether every native WordPress core domain proves a locale complete.
+     *
+     * A single default-domain PO file is not enough: WordPress core also ships
+     * administration, network administration, and continents/cities domains.
+     * Missing or unreadable PO metadata is treated as potentially incomplete so
+     * the server can safely evaluate it instead of suppressing a needed gap-fill.
+     *
+     * @since 1.0.5
+     * @param string $locale Locale code.
+     * @return bool True only when all expected core domains are complete.
+     */
+    private function is_core_locale_complete(string $locale): bool {
+        if (!preg_match('/^[a-z]{2,3}(?:_[A-Z]{2,3})?$/', $locale)) {
+            return false;
+        }
+
+        foreach (self::CORE_DOMAIN_FILE_PREFIXES as $file_prefix) {
+            $po_file = WP_LANG_DIR . '/' . $file_prefix . $locale . '.po';
+            if (!$this->is_translation_file_complete($po_file)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check one PO catalog for complete, non-fuzzy singular and plural entries.
+     *
+     * @since 1.0.5
+     * @param string $po_file Absolute PO file path.
+     * @return bool Whether the catalog proves complete coverage.
+     */
+    private function is_translation_file_complete(string $po_file): bool {
+        if (!is_readable($po_file)) {
+            return false;
+        }
+
+        if (!class_exists('PO')) {
+            require_once ABSPATH . WPINC . '/pomo/po.php';
+        }
+
+        $po = new \PO();
+        if (!$po->import_from_file($po_file) || empty($po->entries)) {
+            return false;
+        }
+
+        $plural_forms = (string) ($po->headers['Plural-Forms'] ?? '');
+        $plural_count = 1;
+        if (preg_match('/nplurals\s*=\s*(\d+)/i', $plural_forms, $matches)) {
+            $plural_count = max(1, (int) $matches[1]);
+        }
+
+        foreach ($po->entries as $entry) {
+            if (!empty($entry->flags) && in_array('fuzzy', $entry->flags, true)) {
+                return false;
+            }
+
+            $translations  = is_array($entry->translations ?? null) ? $entry->translations : [];
+            $required_forms = !empty($entry->plural) ? $plural_count : 1;
+            if (count($translations) < $required_forms) {
+                return false;
+            }
+
+            for ($index = 0; $index < $required_forms; $index++) {
+                if (!isset($translations[$index]) || '' === trim((string) $translations[$index])) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Infer whether a plugin uses WordPress.org or another update source.
      *
      * @since 1.0.0
@@ -833,7 +1179,7 @@ class Translation_Manager {
      *
      * Fires when a user updates their profile (including the language
      * preference). Detects new locales and immediately asks the API
-     * to generate translations for all installed plugins.
+     * to generate translations for installed plugins and WordPress core.
      *
      * @since 1.0.0
      * @param int $user_id User ID.
@@ -879,12 +1225,18 @@ class Translation_Manager {
             ];
         }
 
-        if (empty($batch)) {
+        // Single typed batch — the server determines core completeness across
+        // all native domains before generating any AI gap-fill package.
+        $core_version = (string) get_bloginfo('version');
+        $core_target  = '' === $core_version || $this->is_core_locale_complete($locale)
+            ? null
+            : ['version' => $core_version];
+
+        if (empty($batch) && null === $core_target) {
             return;
         }
 
-        // Single batched call — server auto-queues missing locales.
-        $this->api_client->batch_check_translations($batch, [$locale]);
+        $this->api_client->batch_check_translations($batch, [$locale], $core_target);
     }
 
     /**
