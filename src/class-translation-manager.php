@@ -90,6 +90,7 @@ class Translation_Manager {
     public function init(): void {
         // Hook into translation API to provide AI translations.
         add_filter('translations_api', [$this, 'filter_translations_api'], 20, 3);
+        add_filter('translations_api_result', [$this, 'filter_translations_api_result'], 20, 3);
 
         // Allow WordPress to download packages from the translation server
         // even when it resolves to a private/reserved IP (e.g. local dev).
@@ -396,9 +397,9 @@ class Translation_Manager {
         $core_results = is_array($results) ? ($results['core:' . self::CORE_TEXTDOMAIN] ?? null) : null;
 
         if (!is_array($core_results)) {
-            // Old servers ignore the optional core object. Keep the prior cache
-            // intact and retry later rather than treating this as a plugin result.
-            $this->record_pending($state, 'core', count($locales));
+            // Old servers ignore the optional core object. This is unsupported,
+            // not queued work: preserve existing results and retry on a later scan
+            // without reporting jobs that the server never created.
             return;
         }
 
@@ -533,6 +534,16 @@ class Translation_Manager {
                 continue;
             }
 
+            if (
+                'core' === (string) ($entry['type'] ?? 'plugin')
+                && (string) ($entry['version'] ?? '') !== (string) get_bloginfo('version')
+            ) {
+                // Core files are replaced in place during a WordPress upgrade.
+                // Retaining an old-version ledger row would display and count the
+                // current files once for every historical version.
+                continue;
+            }
+
             $identity = $this->get_translation_entry_identity($entry);
             if ('' === $identity) {
                 continue;
@@ -612,6 +623,18 @@ class Translation_Manager {
                 continue;
             }
 
+            $downloaded_core_package = null;
+            if ('core' === $type) {
+                $downloaded_core_package = $this->download_complete_core_package(
+                    $package,
+                    (string) $entry['language']
+                );
+                if (is_wp_error($downloaded_core_package)) {
+                    continue;
+                }
+                $package = $downloaded_core_package;
+            }
+
             $language_update = (object) [
                 'type'       => $type,
                 'slug'       => (string) $entry['slug'],
@@ -623,7 +646,101 @@ class Translation_Manager {
             ];
 
             $upgrader->bulk_upgrade([$language_update], ['clear_update_cache' => false]);
+
+            if (is_string($downloaded_core_package) && file_exists($downloaded_core_package)) {
+                wp_delete_file($downloaded_core_package);
+            }
         }
+    }
+
+    /**
+     * Download and verify a complete replacement core language pack.
+     *
+     * WordPress clears every core catalog for a locale before extracting one
+     * core package, while its native archive check accepts a single catalog.
+     * Verify all server-contract domains first so a partial archive cannot erase
+     * otherwise valid admin, network-admin, or continents/cities translations.
+     *
+     * @param string $package_url Trusted package URL.
+     * @param string $locale      WordPress locale.
+     * @return string|\WP_Error Downloaded package path or validation error.
+     */
+    private function download_complete_core_package(string $package_url, string $locale) {
+        if (!function_exists('download_url')) {
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+        }
+
+        $package_file = download_url($package_url, 300);
+        if (is_wp_error($package_file)) {
+            return $package_file;
+        }
+
+        $archive_files = $this->get_core_archive_files($package_file);
+        if (is_wp_error($archive_files)) {
+            wp_delete_file($package_file);
+            return $archive_files;
+        }
+
+        foreach (self::CORE_DOMAIN_FILE_PREFIXES as $file_prefix) {
+            $php_catalog = $file_prefix . $locale . '.l10n.php';
+            $po_catalog  = $file_prefix . $locale . '.po';
+            $mo_catalog  = $file_prefix . $locale . '.mo';
+            if (
+                !in_array($php_catalog, $archive_files, true)
+                && (
+                    !in_array($po_catalog, $archive_files, true)
+                    || !in_array($mo_catalog, $archive_files, true)
+                )
+            ) {
+                wp_delete_file($package_file);
+                return new \WP_Error(
+                    'incomplete_core_language_pack',
+                    __('The downloaded AI core language pack is incomplete.', 'superdav-ai-language-packs')
+                );
+            }
+        }
+
+        return $package_file;
+    }
+
+    /**
+     * List normalized file paths from a downloaded core ZIP archive.
+     *
+     * @param string $package_file Absolute package path.
+     * @return array<int, string>|\WP_Error Archive file names or an error.
+     */
+    private function get_core_archive_files(string $package_file) {
+        $files = [];
+
+        if (class_exists('ZipArchive')) {
+            $archive = new \ZipArchive();
+            if (true !== $archive->open($package_file)) {
+                return new \WP_Error('invalid_core_language_pack', __('The downloaded AI core language pack is not a valid ZIP archive.', 'superdav-ai-language-packs'));
+            }
+            for ($index = 0; $index < $archive->numFiles; $index++) {
+                $name = $archive->getNameIndex($index);
+                if (is_string($name)) {
+                    $files[] = ltrim(str_replace('\\', '/', $name), '/');
+                }
+            }
+            $archive->close();
+        } else {
+            if (!class_exists('PclZip')) {
+                require_once ABSPATH . 'wp-admin/includes/class-pclzip.php';
+            }
+            $archive = new \PclZip($package_file);
+            $entries = $archive->listContent();
+            if (!is_array($entries)) {
+                return new \WP_Error('invalid_core_language_pack', __('The downloaded AI core language pack is not a valid ZIP archive.', 'superdav-ai-language-packs'));
+            }
+            foreach ($entries as $entry) {
+                if (is_array($entry) && isset($entry['filename'])) {
+                    $files[] = ltrim(str_replace('\\', '/', (string) $entry['filename']), '/');
+                }
+            }
+        }
+
+        return array_values(array_unique($files));
     }
 
     /**
@@ -662,36 +779,55 @@ class Translation_Manager {
             return $result;
         }
 
-        if (!is_array($result)) {
-            $result = [];
-        }
-
-        // Serve from the cache populated by refresh_translations_cache().
-        // Never make sync API calls on this hook — it fires during admin
-        // requests and would block. If the cache is empty, schedule a
-        // refresh and return whatever we have.
-        $cached = get_site_transient('sd_ai_lang_packs_translations_cache');
-        if (false === $cached) {
+        // This pre-request filter must preserve false so WordPress still calls
+        // its official API. AI results are merged by filter_translations_api_result().
+        if (false === get_site_transient('sd_ai_lang_packs_translations_cache')) {
             if (!wp_next_scheduled('sd_ai_lang_packs_refresh_cache')) {
                 wp_schedule_single_event(time() + 5, 'sd_ai_lang_packs_refresh_cache');
             }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Merge cached AI packages into the completed official API response.
+     *
+     * @since 1.0.5
+     * @param array|\WP_Error $result Completed translation API response.
+     * @param string          $type   Requested translation type.
+     * @param object|array    $args   Translation API arguments.
+     * @return array|\WP_Error Modified response.
+     */
+    public function filter_translations_api_result($result, string $type, $args) {
+        if (!in_array($type, ['plugins', 'core'], true)) {
             return $result;
         }
+
+        $api_error = is_wp_error($result) ? $result : null;
+        if ($api_error) {
+            // A cached package remains a safe fallback when WordPress.org is
+            // temporarily unavailable. Preserve the error if nothing matches.
+            $result = ['translations' => []];
+        }
+
+        $cached = get_site_transient('sd_ai_lang_packs_translations_cache');
         if (!is_array($cached) || empty($cached)) {
-            return $result;
+            return $api_error ?? $result;
         }
 
         $slugs = is_object($args)
             ? ($args->slugs ?? null)
-            : (is_array($args) ? ($args['slugs'] ?? null) : null);
+            : ($args['slugs'] ?? null);
         $wanted_slugs   = !empty($slugs) ? (array) $slugs : null;
         $wanted_version = $this->get_translation_api_argument($args, 'version');
 
         if ('core' === $type && '' === $wanted_version) {
             // A core package without an exact version could cross an upgrade.
-            return $result;
+            return $api_error ?? $result;
         }
 
+        $added_cached_package = false;
         foreach ($cached as $entry) {
             if (!is_array($entry)) {
                 continue;
@@ -713,13 +849,46 @@ class Translation_Manager {
                 continue;
             }
 
-            if (!isset($result['translations'])) {
+            if (!isset($result['translations']) || !is_array($result['translations'])) {
                 $result['translations'] = [];
             }
+
+            $matching_official_entries = array_filter(
+                $result['translations'],
+                static function ($official_entry) use ($entry): bool {
+                    return is_array($official_entry)
+                        && (string) ($official_entry['language'] ?? '') === (string) ($entry['language'] ?? '')
+                        && (string) ($official_entry['version'] ?? '') === (string) ($entry['version'] ?? '');
+                }
+            );
+
+            // Let a newer official package supersede the cached merged package.
+            // A subsequent AI refresh can replace it again after incorporating
+            // those human translations.
+            $entry_updated = strtotime((string) ($entry['updated'] ?? ''));
+            foreach ($matching_official_entries as $official_entry) {
+                $official_updated = strtotime((string) ($official_entry['updated'] ?? ''));
+                if (!$entry_updated || !$official_updated || $official_updated > $entry_updated) {
+                    continue 2;
+                }
+            }
+
+            // The AI package is a merged superset of the official package for
+            // this exact target. Replace that one offer rather than returning
+            // duplicate updates whose installation order would be ambiguous.
+            $result['translations'] = array_values(array_filter(
+                $result['translations'],
+                static function ($official_entry) use ($entry): bool {
+                    return !is_array($official_entry)
+                        || (string) ($official_entry['language'] ?? '') !== (string) ($entry['language'] ?? '')
+                        || (string) ($official_entry['version'] ?? '') !== (string) ($entry['version'] ?? '');
+                }
+            ));
             $result['translations'][] = $entry;
+            $added_cached_package     = true;
         }
 
-        return $result;
+        return $api_error && !$added_cached_package ? $api_error : $result;
     }
 
     /**
@@ -919,7 +1088,7 @@ class Translation_Manager {
             return $cached_locales;
         }
 
-        $locales = $this->locale_discovery->get_locales();
+        $locales = array_map('strval', $this->locale_discovery->get_locales());
 
         $cached_locales = empty($locales) ? ['en_US'] : $locales;
 
@@ -941,8 +1110,8 @@ class Translation_Manager {
 
         foreach ($this->get_site_locales() as $locale) {
             if (
-                !is_string($locale)
-                || !$this->locale_discovery->is_translation_locale($locale)
+                !$this->locale_discovery->is_translation_locale($locale)
+                || !$this->is_valid_core_locale($locale)
                 || $this->is_core_locale_complete($locale)
             ) {
                 continue;
@@ -969,7 +1138,7 @@ class Translation_Manager {
      * @return bool True only when all expected core domains are complete.
      */
     private function is_core_locale_complete(string $locale): bool {
-        if (!preg_match('/^[a-z]{2,3}(?:_[A-Z]{2,3})?$/', $locale)) {
+        if (!$this->is_valid_core_locale($locale)) {
             return false;
         }
 
@@ -981,6 +1150,19 @@ class Translation_Manager {
         }
 
         return true;
+    }
+
+    /**
+     * Validate a WordPress locale before using it in a core package filename.
+     *
+     * Supports standard variants such as de_DE_formal while excluding path
+     * separators and malformed numeric option values.
+     *
+     * @param string $locale Locale code.
+     * @return bool Whether the locale is safe and structurally plausible.
+     */
+    private function is_valid_core_locale(string $locale): bool {
+        return 1 === preg_match('/^[A-Za-z][A-Za-z0-9_-]*$/D', $locale);
     }
 
     /**
