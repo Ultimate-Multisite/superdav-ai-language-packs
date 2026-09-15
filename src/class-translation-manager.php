@@ -670,6 +670,9 @@ class Translation_Manager {
             require_once ABSPATH . 'wp-admin/includes/file.php';
         }
 
+        global $wp_version;
+        $supports_php_catalogs = version_compare($wp_version, '6.6', '>=');
+
         $package_file = download_url($package_url, 300);
         if (is_wp_error($package_file)) {
             return $package_file;
@@ -686,7 +689,7 @@ class Translation_Manager {
             $po_catalog  = $file_prefix . $locale . '.po';
             $mo_catalog  = $file_prefix . $locale . '.mo';
             if (
-                !in_array($php_catalog, $archive_files, true)
+                (!$supports_php_catalogs || !in_array($php_catalog, $archive_files, true))
                 && (
                     !in_array($po_catalog, $archive_files, true)
                     || !in_array($mo_catalog, $archive_files, true)
