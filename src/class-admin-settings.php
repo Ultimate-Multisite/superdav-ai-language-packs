@@ -340,7 +340,7 @@ class Admin_Settings {
 							<?php foreach ( $local as $item ) : ?>
 								<tr>
 									<td>
-										<?php if ( 'core' === ( $item['type'] ?? 'plugin' ) ) : ?>
+										<?php if ( 'core' === $item['type'] ) : ?>
 											<strong><?php esc_html_e( 'WordPress core', 'superdav-ai-language-packs' ); ?></strong><br>
 											<span class="sd-ai-lang-packs-muted">
 												<?php echo esc_html( $item['textdomain'] ); ?>
